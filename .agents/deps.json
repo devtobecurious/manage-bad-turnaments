@@ -1,0 +1,101 @@
+﻿{
+    "_generated":  "2026-05-12T13:35:01Z",
+    "_source":  "github-labels",
+    "dependencies":  {
+                         "issue-1":  [
+
+                                     ],
+                         "issue-2":  [
+                                         "issue-1"
+                                     ],
+                         "issue-3":  [
+                                         "issue-1"
+                                     ],
+                         "issue-4":  [
+                                         "issue-1"
+                                     ],
+                         "issue-5":  [
+                                         "issue-4",
+                                         "issue-3",
+                                         "issue-2"
+                                     ],
+                         "issue-6":  [
+                                         "issue-4",
+                                         "issue-3",
+                                         "issue-2"
+                                     ],
+                         "issue-7":  [
+                                         "issue-4",
+                                         "issue-3",
+                                         "issue-2"
+                                     ],
+                         "issue-8":  [
+                                         "issue-7",
+                                         "issue-6",
+                                         "issue-5"
+                                     ],
+                         "issue-9":  [
+                                         "issue-7",
+                                         "issue-6",
+                                         "issue-5"
+                                     ],
+                         "issue-10":  [
+                                          "issue-7",
+                                          "issue-6",
+                                          "issue-5"
+                                      ],
+                         "issue-11":  [
+                                          "issue-10",
+                                          "issue-9",
+                                          "issue-8"
+                                      ],
+                         "issue-12":  [
+                                          "issue-10",
+                                          "issue-9",
+                                          "issue-8"
+                                      ],
+                         "issue-13":  [
+                                          "issue-12",
+                                          "issue-11"
+                                      ],
+                         "issue-14":  [
+                                          "issue-12",
+                                          "issue-11"
+                                      ],
+                         "issue-15":  [
+                                          "issue-12",
+                                          "issue-11"
+                                      ],
+                         "issue-16":  [
+                                          "issue-12",
+                                          "issue-11"
+                                      ],
+                         "issue-17":  [
+                                          "issue-16",
+                                          "issue-15",
+                                          "issue-14",
+                                          "issue-13"
+                                      ],
+                         "issue-18":  [
+                                          "issue-16",
+                                          "issue-15",
+                                          "issue-14",
+                                          "issue-13"
+                                      ],
+                         "issue-19":  [
+                                          "issue-16",
+                                          "issue-15",
+                                          "issue-14",
+                                          "issue-13"
+                                      ],
+                         "issue-20":  [
+                                          "issue-19",
+                                          "issue-18",
+                                          "issue-17",
+                                          "issue-16",
+                                          "issue-15",
+                                          "issue-14",
+                                          "issue-13"
+                                      ]
+                     }
+}
