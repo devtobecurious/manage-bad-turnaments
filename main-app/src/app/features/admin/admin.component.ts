@@ -1,24 +1,38 @@
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
+  imports: [RouterLink, RouterOutlet],
   template: `
-    <div class="min-h-screen bg-gray-50 p-8">
-      <div class="max-w-4xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-          <h1 class="text-3xl font-bold text-gray-900">Administration</h1>
-          <button
-            (click)="signOut()"
-            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Se déconnecter
-          </button>
+    <div class="min-h-screen bg-gray-50">
+      <header class="bg-white shadow-sm">
+        <div class="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
+          <h1 class="text-2xl font-bold text-gray-900">Administration</h1>
+          <div class="flex items-center gap-4">
+            <span class="text-sm text-gray-600">{{ authService.currentUser()?.displayName }}</span>
+            <button
+              (click)="signOut()"
+              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+            >
+              Se déconnecter
+            </button>
+          </div>
         </div>
-        <p class="text-gray-600">Bienvenue, {{ authService.currentUser()?.displayName }}</p>
-      </div>
+        <nav class="max-w-6xl mx-auto px-8 pb-3 flex gap-4">
+          <a
+            routerLink="/admin/players"
+            class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+          >
+            Membres
+          </a>
+        </nav>
+      </header>
+      <main class="max-w-6xl mx-auto px-8 py-6">
+        <router-outlet />
+      </main>
     </div>
   `,
 })

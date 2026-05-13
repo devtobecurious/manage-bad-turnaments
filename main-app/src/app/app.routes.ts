@@ -9,9 +9,28 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
-    loadComponent: () =>
-      import('./features/admin/admin.component').then((m) => m.AdminComponent),
     canActivate: [adminGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/admin/admin.component').then((m) => m.AdminComponent),
+      },
+      {
+        path: 'players',
+        loadComponent: () =>
+          import('./features/admin/players/players-list.component').then(
+            (m) => m.PlayersListComponent
+          ),
+      },
+      {
+        path: 'players/:id',
+        loadComponent: () =>
+          import('./features/admin/players/player-detail.component').then(
+            (m) => m.PlayerDetailComponent
+          ),
+      },
+    ],
   },
   {
     path: '',
