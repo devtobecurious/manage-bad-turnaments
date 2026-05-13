@@ -31,7 +31,9 @@ foreach ($issue in $rawIssues) {
     $epicToIssues[$epicLabel] += $issue.number
 }
 
-# Construire le graphe de dépendances
+# Construire le graphe de dépendances (minimal chain)
+# Stratégie : chaque issue dépend uniquement de la DERNIÈRE issue de chaque épic parent.
+# Les issues d'un même épic sont indépendantes entre elles → parallélisme maximal au sein d'un épic.
 $dependencies = [ordered]@{}
 foreach ($issue in ($rawIssues | Sort-Object number)) {
     $epicLabel = ($issue.labels | Where-Object { $_.name -like "epic:*" } | Select-Object -First 1).name
@@ -40,32 +42,18 @@ foreach ($issue in ($rawIssues | Sort-Object number)) {
     $key = "issue-$($issue.number)"
     $deps = @()
 
-    # Trouver les épics dont dépend cet épic
     $parentEpics = $epicOrder[$epicLabel]
     if ($parentEpics) {
         foreach ($parentEpic in $parentEpics) {
             if ($epicToIssues.ContainsKey($parentEpic)) {
-                foreach ($parentIssueNum in $epicToIssues[$parentEpic]) {
-                    $deps += "issue-$parentIssueNum"
-                }
+                # Seulement la dernière issue du parent (numéro max)
+                $lastParentIssue = ($epicToIssues[$parentEpic] | Sort-Object | Select-Object -Last 1)
+                $deps += "issue-$lastParentIssue"
             }
         }
     }
 
     $dependencies[$key] = $deps
-}
-
-# Ajouter les dépendances intra-épic en chaîne (issue N dépend de l'issue précédente dans le même épic)
-# Garantit qu'un agent n'implémente pas une feature dont la fondation (service/modèle) n'existe pas encore.
-foreach ($epic in $epicToIssues.Keys) {
-    $issuesInEpic = @($epicToIssues[$epic] | Sort-Object)  # @() force tableau même à 1 élément
-    for ($i = 1; $i -lt $issuesInEpic.Count; $i++) {
-        $currentKey  = "issue-$($issuesInEpic[$i])"
-        $previousKey = "issue-$($issuesInEpic[$i - 1])"
-        if ($dependencies.Contains($currentKey) -and -not $dependencies[$currentKey].Contains($previousKey)) {
-            $dependencies[$currentKey] += $previousKey
-        }
-    }
 }
 
 $output = [ordered]@{
