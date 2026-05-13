@@ -30,6 +30,13 @@ export const routes: Routes = [
             (m) => m.PlayerDetailComponent
           ),
       },
+      {
+        path: 'tournaments/new',
+        loadComponent: () =>
+          import('./features/admin/tournaments/create-tournament.component').then(
+            (m) => m.CreateTournamentComponent
+          ),
+      },
     ],
   },
   {
