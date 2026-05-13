@@ -24,7 +24,7 @@ import { Player } from '../../../core/models/player.model';
             <div class="flex gap-2">
               <dt class="text-sm font-medium text-gray-500 w-24">Genre :</dt>
               <dd class="text-sm text-gray-900">
-                {{ player()!.gender === 'M' ? 'Masculin' : 'Féminin' }}
+                {{ player()!.gender === 'homme' ? 'Masculin' : 'Féminin' }}
               </dd>
             </div>
             <div class="flex gap-2">

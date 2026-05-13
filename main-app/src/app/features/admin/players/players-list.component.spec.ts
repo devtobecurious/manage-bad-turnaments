@@ -7,9 +7,9 @@ import { PlayerService } from '../../../core/services/player.service';
 import { Player } from '../../../core/models/player.model';
 
 const mockPlayers: Player[] = [
-  { id: 'p1', firstName: 'Alice', lastName: 'Dupont', gender: 'F', active: true },
-  { id: 'p2', firstName: 'Bob', lastName: 'Martin', gender: 'M', active: true },
-  { id: 'p3', firstName: 'Claire', lastName: 'Arnaud', gender: 'F', active: false },
+  { id: 'p1', firstName: 'Alice', lastName: 'Dupont', gender: 'femme', active: true, createdAt: '2026-05-01T00:00:00Z' },
+  { id: 'p2', firstName: 'Bob', lastName: 'Martin', gender: 'homme', active: true, createdAt: '2026-05-01T00:00:00Z' },
+  { id: 'p3', firstName: 'Claire', lastName: 'Arnaud', gender: 'femme', active: false, createdAt: '2026-05-01T00:00:00Z' },
 ];
 
 describe('PlayersListComponent', () => {
@@ -54,20 +54,20 @@ describe('PlayersListComponent', () => {
     const alice = players.find((p) => p.id === 'p1');
     expect(alice?.firstName).toBe('Alice');
     expect(alice?.lastName).toBe('Dupont');
-    expect(alice?.gender).toBe('F');
+    expect(alice?.gender).toBe('femme');
   });
 
-  it('should filter by gender F — AC: filtrable par genre', () => {
-    component.genderFilter.set('F');
+  it('should filter by gender femme — AC: filtrable par genre', () => {
+    component.genderFilter.set('femme');
     const filtered = component.filteredSortedPlayers();
-    expect(filtered.every((p) => p.gender === 'F')).toBe(true);
+    expect(filtered.every((p) => p.gender === 'femme')).toBe(true);
     expect(filtered.length).toBe(2);
   });
 
-  it('should filter by gender M — AC: filtrable par genre', () => {
-    component.genderFilter.set('M');
+  it('should filter by gender homme — AC: filtrable par genre', () => {
+    component.genderFilter.set('homme');
     const filtered = component.filteredSortedPlayers();
-    expect(filtered.every((p) => p.gender === 'M')).toBe(true);
+    expect(filtered.every((p) => p.gender === 'homme')).toBe(true);
     expect(filtered.length).toBe(1);
   });
 

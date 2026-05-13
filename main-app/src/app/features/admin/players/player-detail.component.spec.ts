@@ -7,8 +7,8 @@ import { PlayerService } from '../../../core/services/player.service';
 import { Player } from '../../../core/models/player.model';
 
 const mockPlayers: Player[] = [
-  { id: 'p1', firstName: 'Alice', lastName: 'Dupont', gender: 'F', active: true },
-  { id: 'p2', firstName: 'Bob', lastName: 'Martin', gender: 'M', active: false },
+  { id: 'p1', firstName: 'Alice', lastName: 'Dupont', gender: 'femme', active: true, createdAt: '2026-05-01T00:00:00Z' },
+  { id: 'p2', firstName: 'Bob', lastName: 'Martin', gender: 'homme', active: false, createdAt: '2026-05-01T00:00:00Z' },
 ];
 
 describe('PlayerDetailComponent', () => {
@@ -56,7 +56,7 @@ describe('PlayerDetailComponent', () => {
   });
 
   it('should display player gender — AC: liste nom/prénom/genre', () => {
-    expect(component.player()?.gender).toBe('F');
+    expect(component.player()?.gender).toBe('femme');
   });
 
   it('goBack() should navigate to /admin/players — AC: accès profil détaillé', () => {

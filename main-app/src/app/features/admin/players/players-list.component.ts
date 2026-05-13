@@ -24,8 +24,8 @@ import { Player, Gender } from '../../../core/models/player.model';
             class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Tous</option>
-            <option value="M">Masculin</option>
-            <option value="F">Féminin</option>
+            <option value="homme">Masculin</option>
+            <option value="femme">Féminin</option>
           </select>
         </div>
 
@@ -79,7 +79,7 @@ import { Player, Gender } from '../../../core/models/player.model';
                   <td class="px-4 py-3 text-sm text-gray-900">{{ player.lastName }}</td>
                   <td class="px-4 py-3 text-sm text-gray-900">{{ player.firstName }}</td>
                   <td class="px-4 py-3 text-sm text-gray-600">
-                    {{ player.gender === 'M' ? 'Masculin' : 'Féminin' }}
+                    {{ player.gender === 'homme' ? 'Masculin' : 'Féminin' }}
                   </td>
                   <td class="px-4 py-3">
                     @if (player.active) {
@@ -124,6 +124,7 @@ export class PlayersListComponent implements OnInit, OnDestroy {
   private readonly allPlayers = signal<Player[]>([]);
   readonly genderFilter = signal<Gender | ''>('');
   readonly sortDirection = signal<'asc' | 'desc'>('asc');
+
 
   readonly filteredSortedPlayers = computed(() => {
     let players = this.allPlayers();
