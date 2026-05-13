@@ -47,17 +47,29 @@ Algorithme de tri topologique :
 
 Vagues attendues au démarrage (toutes `pending`) :
 ```
-Vague 1  : issue-1
-Vague 2  : issue-2, issue-3, issue-4
-Vague 3  : issue-5, issue-6
-Vague 4  : issue-7
-Vague 5  : issue-8, issue-9, issue-10
-Vague 6  : issue-11, issue-12
-Vague 7  : issue-13, issue-14, issue-15
-Vague 8  : issue-16, issue-17
-Vague 9  : issue-18, issue-19
-Vague 10 : issue-20
+Vague 1  : issue-1   (US-001 Auth)
+Vague 2  : issue-2   (US-003 Créer profil)
+Vague 3  : issue-3   (US-004 Liste membres)
+Vague 4  : issue-4   (US-002 Inscription lien)
+Vague 5  : issue-5   (US-005 Créer tournoi)
+Vague 6  : issue-6   (US-006 Format poules)
+Vague 7  : issue-7   (US-007 Publier tournoi)
+Vague 8  : issue-8   (US-009 Gérer inscrits)
+Vague 9  : issue-9   (US-010 Clôturer inscriptions)
+Vague 10 : issue-10  (US-008 S'inscrire tournoi)
+Vague 11 : issue-11  (US-011 Former paires)
+Vague 12 : issue-12  (US-012 Répartir poules)
+Vague 13 : issue-13  (US-013 Calendrier matchs)
+Vague 14 : issue-14  (US-014 Saisir score poule)
+Vague 15 : issue-15  (US-015 Calcul classement)
+Vague 16 : issue-16  (US-016 Consulter résultats)
+Vague 17 : issue-17  (US-017 Générer tableau final)
+Vague 18 : issue-18  (US-018 Saisir score finale)
+Vague 19 : issue-19  (US-019 Consulter tableau final)
+Vague 20 : issue-20  (US-020 Stats joueur)
 ```
+Note : les vagues sont séquentielles (1 issue par vague) car chaque issue dépend
+de la précédente dans son épic — garantit que les services/modèles existent avant usage.
 
 ---
 

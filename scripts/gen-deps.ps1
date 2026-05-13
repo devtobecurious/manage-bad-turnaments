@@ -55,6 +55,19 @@ foreach ($issue in ($rawIssues | Sort-Object number)) {
     $dependencies[$key] = $deps
 }
 
+# Ajouter les dépendances intra-épic en chaîne (issue N dépend de l'issue précédente dans le même épic)
+# Garantit qu'un agent n'implémente pas une feature dont la fondation (service/modèle) n'existe pas encore.
+foreach ($epic in $epicToIssues.Keys) {
+    $issuesInEpic = @($epicToIssues[$epic] | Sort-Object)  # @() force tableau même à 1 élément
+    for ($i = 1; $i -lt $issuesInEpic.Count; $i++) {
+        $currentKey  = "issue-$($issuesInEpic[$i])"
+        $previousKey = "issue-$($issuesInEpic[$i - 1])"
+        if ($dependencies.Contains($currentKey) -and -not $dependencies[$currentKey].Contains($previousKey)) {
+            $dependencies[$currentKey] += $previousKey
+        }
+    }
+}
+
 $output = [ordered]@{
     "_generated" = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
     "_source"    = "github-labels"

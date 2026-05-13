@@ -12,7 +12,7 @@ $allIssueKeys = $deps.dependencies.PSObject.Properties.Name
 
 # Charger les PRs GitHub ouverts et mergés
 $openPRs   = gh pr list --state open   --json number,title,headRefName | ConvertFrom-Json
-$mergedPRs = gh pr list --state merged --json number,title,headRefName | ConvertFrom-Json
+$mergedPRs = gh pr list --state merged --limit 100 --json number,title,headRefName | ConvertFrom-Json
 
 # Charger les branches distantes
 $remoteBranches = git branch -r | ForEach-Object { $_.Trim() -replace '^origin/', '' }

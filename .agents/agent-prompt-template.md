@@ -62,7 +62,7 @@ Vérifie chaque point de la checklist. Si un point échoue, corrige et recommite
 - [ ] Chaque critère d'acceptation de l'issue a au moins un test Vitest correspondant
 - [ ] Fichier `.spec.ts` présent pour chaque service créé
 - [ ] `ng test --watch=false` passe sans erreur après les corrections
-- [ ] Aucune clé Firebase dans les fichiers committés (`git log -p | grep -i "apiKey\|authDomain"`)
+- [ ] Aucune clé Firebase dans les fichiers committés (`git log -p | Select-String -Pattern "apiKey|authDomain" -CaseSensitive:$false`)
 - [ ] Composants Angular en mode standalone, utilisant signals si état local nécessaire
 - [ ] Aucun `console.log` dans le code de production (hors `.spec.ts`)
 - [ ] Aucun import de module Angular deprecated
