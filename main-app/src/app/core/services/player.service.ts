@@ -1,5 +1,16 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, addDoc, doc, getDoc } from '@angular/fire/firestore';
+import {
+  Firestore,
+  collection,
+  collectionData,
+  addDoc,
+  doc,
+  getDoc,
+  updateDoc,
+  query,
+  orderBy,
+} from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
 import { Player, Gender } from '../models/player.model';
 
 export interface RegisterPlayerData {
@@ -14,6 +25,17 @@ export interface RegisterPlayerData {
 export class PlayerService {
   private readonly firestore = inject(Firestore);
 
+  getPlayers(): Observable<Player[]> {
+    const playersRef = collection(this.firestore, 'players');
+    const q = query(playersRef, orderBy('lastName', 'asc'));
+    return collectionData(q, { idField: 'id' }) as Observable<Player[]>;
+  }
+
+  async deactivatePlayer(playerId: string): Promise<void> {
+    const playerRef = doc(this.firestore, 'players', playerId);
+    await updateDoc(playerRef, { active: false });
+  }
+
   async registerPlayer(data: RegisterPlayerData): Promise<Player> {
     const playersRef = collection(this.firestore, 'players');
     const now = new Date().toISOString();
@@ -23,6 +45,7 @@ export class PlayerService {
       lastName: data.lastName,
       gender: data.gender,
       createdAt: now,
+      active: true,
     });
 
     return {
@@ -31,6 +54,7 @@ export class PlayerService {
       lastName: data.lastName,
       gender: data.gender,
       createdAt: now,
+      active: true,
     };
   }
 

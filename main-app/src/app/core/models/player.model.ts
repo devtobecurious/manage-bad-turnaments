@@ -6,4 +6,5 @@ export interface Player {
   lastName: string;
   gender: Gender;
   createdAt: string;
+  active: boolean;
 }
