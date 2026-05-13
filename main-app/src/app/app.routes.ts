@@ -30,6 +30,14 @@ export const routes: Routes = [
             (m) => m.PlayerDetailComponent
           ),
       },
+      {
+        // Admin: publish a tournament (US-007)
+        path: 'tournaments/:id/publish',
+        loadComponent: () =>
+          import('./features/admin/tournaments/publish-tournament.component').then(
+            (m) => m.PublishTournamentComponent
+          ),
+      },
     ],
   },
   {
