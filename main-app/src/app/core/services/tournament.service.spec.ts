@@ -204,7 +204,7 @@ describe('TournamentService', () => {
     const result = await service.createTournament({
       name: 'Tournoi ID Test',
       date: '2026-09-15',
-      gameTypes: ['double-mixte' as any],
+      gameTypes: ['mixte'],
     });
 
     expect(result.id).toBe('generated-tournament-id');
