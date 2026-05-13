@@ -32,11 +32,33 @@ main-app/          ← application Angular
 - Branche par issue : `feat/issue-N-slug`
 - Merge direct sur `main` dès que les tests Vitest passent
 
-## Coordination multi-agents
-Fichiers de statut dans `.agents/status/` (à la racine du repo) :
-- `issue-N.json` → `{ "status": "done"|"failed"|"in-progress", "branch": "feat/issue-N-…" }`
-- Un agent dépendant poll ce fichier toutes les 60 s avant de démarrer
-- Si `status: "failed"` → l'agent s'arrête et notifie l'utilisateur
+## Orchestration multi-agents
+
+Infrastructure complète dans `.agents/` et `scripts/`. Voir la spec :
+`docs/specs/2026-05-12-orchestration-multi-agents-design.md`
+
+### Scripts disponibles
+- `.\scripts\gen-deps.ps1` — génère `.agents/deps.json` depuis les labels GitHub
+- `.\scripts\gen-context.ps1 -IssueNumber N [-Step <step>]` — génère le contexte d'un agent
+- `.\scripts\check-state.ps1` — réconcilie l'état local vs GitHub, retourne JSON
+
+### Structure d'état par issue (`.agents/status/issue-N.json`)
+```json
+{
+  "issue": 5, "status": "in-progress", "step": "coding",
+  "branch": "feat/issue-5-creer-tournoi",
+  "worktree": "D:/Works/Projects/Persos/manage-bad-turnaments-worktrees/issue-5",
+  "pr": null, "startedAt": "...", "updatedAt": "...", "error": null
+}
+```
+
+### Transitions de step
+`pending → coding → tests-passing → pr-open → review-ok → merged`
+`failed` = bloquant non résolu, dépendants non lancés
+
+### Lancer l'orchestration
+Lis `.agents/orchestrator-runbook.md` pour le protocole complet.
+Commande de démarrage : `.\scripts\gen-deps.ps1` puis `.\scripts\check-state.ps1`
 
 ## Règles
 - Chaque issue = une branche = un worktree isolé
