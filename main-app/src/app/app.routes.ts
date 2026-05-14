@@ -53,6 +53,14 @@ export const routes: Routes = [
       import('./features/players/profile/profile.component').then((m) => m.PlayerProfileComponent),
   },
   {
+    // Player: register/unregister for open tournaments (US-008)
+    path: 'player/:id/tournaments',
+    loadComponent: () =>
+      import('./features/players/tournaments/player-tournaments.component').then(
+        (m) => m.PlayerTournamentsComponent
+      ),
+  },
+  {
     path: '',
     redirectTo: 'admin',
     pathMatch: 'full',
