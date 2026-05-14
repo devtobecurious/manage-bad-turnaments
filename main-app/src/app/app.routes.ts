@@ -31,6 +31,22 @@ export const routes: Routes = [
           ),
       },
       {
+        // Admin: create a new tournament (US-005)
+        path: 'tournaments/new',
+        loadComponent: () =>
+          import('./features/admin/tournaments/create-tournament.component').then(
+            (m) => m.CreateTournamentComponent
+          ),
+      },
+      {
+        // Admin: configure pool format (US-006)
+        path: 'tournaments/:id/pool-config',
+        loadComponent: () =>
+          import('./features/admin/tournaments/pool-config.component').then(
+            (m) => m.PoolConfigComponent
+          ),
+      },
+      {
         // Admin: publish a tournament (US-007)
         path: 'tournaments/:id/publish',
         loadComponent: () =>
@@ -67,6 +83,14 @@ export const routes: Routes = [
     path: 'player/:id',
     loadComponent: () =>
       import('./features/players/profile/profile.component').then((m) => m.PlayerProfileComponent),
+  },
+  {
+    // Player: register/unregister for open tournaments (US-008)
+    path: 'player/:id/tournaments',
+    loadComponent: () =>
+      import('./features/players/tournaments/player-tournaments.component').then(
+        (m) => m.PlayerTournamentsComponent
+      ),
   },
   {
     path: '',

@@ -2,21 +2,23 @@ import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
+  collectionData,
   addDoc,
   doc,
   getDoc,
   updateDoc,
   query,
   orderBy,
-  collectionData,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
-import { Tournament, TournamentStatus } from '../models/tournament.model';
+import { Tournament, GameType, TournamentStatus, PoolConfig } from '../models/tournament.model';
 
 export interface CreateTournamentData {
   name: string;
   date: string;
-  createdBy: string;
+  description?: string;
+  gameTypes?: GameType[];
+  createdBy?: string;
 }
 
 @Injectable({
@@ -50,9 +52,11 @@ export class TournamentService {
     const docRef = await addDoc(tournamentsRef, {
       name: data.name,
       date: data.date,
+      ...(data.description !== undefined ? { description: data.description } : {}),
+      ...(data.gameTypes !== undefined ? { gameTypes: data.gameTypes } : {}),
       status: 'Brouillon' as TournamentStatus,
       participationToken: null,
-      createdBy: data.createdBy,
+      ...(data.createdBy !== undefined ? { createdBy: data.createdBy } : {}),
       createdAt: now,
     });
 
@@ -60,9 +64,11 @@ export class TournamentService {
       id: docRef.id,
       name: data.name,
       date: data.date,
+      ...(data.description !== undefined ? { description: data.description } : {}),
+      ...(data.gameTypes !== undefined ? { gameTypes: data.gameTypes } : {}),
       status: 'Brouillon',
       participationToken: null,
-      createdBy: data.createdBy,
+      ...(data.createdBy !== undefined ? { createdBy: data.createdBy } : {}),
       createdAt: now,
     };
   }
@@ -102,5 +108,15 @@ export class TournamentService {
   async canRegister(tournamentId: string): Promise<boolean> {
     const tournament = await this.getTournament(tournamentId);
     return tournament?.status === 'Inscriptions ouvertes';
+  }
+
+  /**
+   * Updates the pool configuration for a tournament.
+   * Each PoolConfig entry is independent for a given game type.
+   * If poolCount === 1 and qualifiersPerPool === 0, no final phase should be generated.
+   */
+  async updatePoolConfig(tournamentId: string, configs: PoolConfig[]): Promise<void> {
+    const tournamentRef = doc(this.firestore, 'tournaments', tournamentId);
+    await updateDoc(tournamentRef, { poolConfig: configs });
   }
 }
