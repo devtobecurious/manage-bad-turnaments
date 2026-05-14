@@ -12,7 +12,7 @@ import { PlayerService } from '../../../core/services/player.service';
 import { RegistrationService } from '../../../core/services/registration.service';
 import { Player } from '../../../core/models/player.model';
 import { Tournament } from '../../../core/models/tournament.model';
-import { Registration, GameType, getCompatibleGameTypes } from '../../../core/models/registration.model';
+import { Registration, GameType, getCompatibleGameTypes, GAME_TYPE_LABELS } from '../../../core/models/registration.model';
 
 @Component({
   selector: 'app-player-tournaments',
@@ -73,7 +73,7 @@ import { Registration, GameType, getCompatibleGameTypes } from '../../../core/mo
                         @if (getRegistration(tournament.id, gameType); as registration) {
                           <div class="flex items-center justify-between py-2 px-3 bg-blue-50 rounded-lg">
                             <div>
-                              <span class="text-sm font-medium text-blue-900 capitalize">{{ gameType }}</span>
+                              <span class="text-sm font-medium text-blue-900">{{ gameTypeLabel(gameType) }}</span>
                               <span class="ml-2 text-xs text-blue-600">✓ Inscrit</span>
                             </div>
                             <button
@@ -90,7 +90,7 @@ import { Registration, GameType, getCompatibleGameTypes } from '../../../core/mo
                           </div>
                         } @else {
                           <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
-                            <span class="text-sm text-gray-700 capitalize">{{ gameType }}</span>
+                            <span class="text-sm text-gray-700">{{ gameTypeLabel(gameType) }}</span>
                             <button
                               (click)="register(tournament.id, gameType)"
                               [disabled]="processingKey() === tournament.id + ':' + gameType"
@@ -137,6 +137,10 @@ export class PlayerTournamentsComponent implements OnInit, OnDestroy {
 
   private tournamentsSubscription: Subscription | null = null;
   private registrationsSubscription: Subscription | null = null;
+
+  gameTypeLabel(gameType: GameType): string {
+    return GAME_TYPE_LABELS[gameType];
+  }
 
   getRegistration(tournamentId: string, gameType: GameType): Registration | undefined {
     return this.playerRegistrations().find(

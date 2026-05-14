@@ -41,7 +41,7 @@ const mockRegistration: Registration = {
   id: 'reg-1',
   tournamentId: 't1',
   playerId: 'player-1',
-  gameType: 'simple homme',
+  gameType: 'simple-homme',
   registeredAt: '2026-05-14T08:00:00Z',
 };
 
@@ -146,11 +146,11 @@ describe('PlayerTournamentsComponent', () => {
     const { component } = await createComponent('player-1', playerSvc, regSvc);
 
     const types = component.compatibleGameTypes();
-    expect(types).toContain('simple homme');
-    expect(types).toContain('double homme');
-    expect(types).toContain('mixte');
-    expect(types).not.toContain('simple femme');
-    expect(types).not.toContain('double femme');
+    expect(types).toContain('simple-homme');
+    expect(types).toContain('double-homme');
+    expect(types).toContain('double-mixte');
+    expect(types).not.toContain('simple-femme');
+    expect(types).not.toContain('double-femme');
     expect(types.length).toBe(3);
   });
 
@@ -160,11 +160,11 @@ describe('PlayerTournamentsComponent', () => {
     const { component } = await createComponent('player-2', playerSvc, regSvc);
 
     const types = component.compatibleGameTypes();
-    expect(types).toContain('simple femme');
-    expect(types).toContain('double femme');
-    expect(types).toContain('mixte');
-    expect(types).not.toContain('simple homme');
-    expect(types).not.toContain('double homme');
+    expect(types).toContain('simple-femme');
+    expect(types).toContain('double-femme');
+    expect(types).toContain('double-mixte');
+    expect(types).not.toContain('simple-homme');
+    expect(types).not.toContain('double-homme');
     expect(types.length).toBe(3);
   });
 
@@ -176,9 +176,9 @@ describe('PlayerTournamentsComponent', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const text = compiled.textContent ?? '';
-    expect(text).toContain('simple homme');
-    expect(text).toContain('double homme');
-    expect(text).toContain('mixte');
+    expect(text).toContain('Simple Homme');
+    expect(text).toContain('Double Homme');
+    expect(text).toContain('Double Mixte');
   });
 
   // --- AC: confirmation d'inscription ---
@@ -188,10 +188,10 @@ describe('PlayerTournamentsComponent', () => {
     const regSvc = createMockRegistrationService();
     const { component } = await createComponent('player-1', playerSvc, regSvc);
 
-    await component.register('t1', 'simple homme');
+    await component.register('t1', 'simple-homme');
 
-    expect(regSvc.registerForTournament).toHaveBeenCalledWith('t1', 'player-1', 'simple homme');
-    expect(component.confirmationMessage()).toContain('simple homme');
+    expect(regSvc.registerForTournament).toHaveBeenCalledWith('t1', 'player-1', 'simple-homme');
+    expect(component.confirmationMessage()).toContain('simple-homme');
   });
 
   it('register() should display confirmation message in template — AC: confirmation d\'inscription', async () => {
@@ -199,7 +199,7 @@ describe('PlayerTournamentsComponent', () => {
     const regSvc = createMockRegistrationService();
     const { component, fixture } = await createComponent('player-1', playerSvc, regSvc);
 
-    await component.register('t1', 'mixte');
+    await component.register('t1', 'double-mixte');
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -214,7 +214,7 @@ describe('PlayerTournamentsComponent', () => {
     );
     const { component } = await createComponent('player-1', playerSvc, regSvc);
 
-    await component.register('t1', 'simple homme');
+    await component.register('t1', 'simple-homme');
 
     expect(component.errorMessage()).toContain("Le tournoi n'est pas ouvert aux inscriptions.");
     expect(component.confirmationMessage()).toBeNull();
@@ -227,7 +227,7 @@ describe('PlayerTournamentsComponent', () => {
     const regSvc = createMockRegistrationService();
     const { component } = await createComponent('player-1', playerSvc, regSvc);
 
-    await component.unregister('t1', 'reg-1', 'simple homme');
+    await component.unregister('t1', 'reg-1', 'simple-homme');
 
     expect(regSvc.unregisterFromTournament).toHaveBeenCalledWith('t1', 'reg-1');
     expect(component.confirmationMessage()).toContain('Désinscription');
@@ -241,7 +241,7 @@ describe('PlayerTournamentsComponent', () => {
     );
     const { component } = await createComponent('player-1', playerSvc, regSvc);
 
-    await component.unregister('t1', 'reg-1', 'simple homme');
+    await component.unregister('t1', 'reg-1', 'simple-homme');
 
     expect(component.errorMessage()).toContain("La désinscription n'est plus possible");
     expect(component.confirmationMessage()).toBeNull();
@@ -272,7 +272,7 @@ describe('PlayerTournamentsComponent', () => {
     const regSvc = createMockRegistrationService([mockTournament], [mockRegistration]);
     const { component } = await createComponent('player-1', playerSvc, regSvc);
 
-    const reg = component.getRegistration('t1', 'simple homme');
+    const reg = component.getRegistration('t1', 'simple-homme');
     expect(reg).toEqual(mockRegistration);
   });
 
@@ -281,7 +281,7 @@ describe('PlayerTournamentsComponent', () => {
     const regSvc = createMockRegistrationService([mockTournament], []);
     const { component } = await createComponent('player-1', playerSvc, regSvc);
 
-    const reg = component.getRegistration('t1', 'simple homme');
+    const reg = component.getRegistration('t1', 'simple-homme');
     expect(reg).toBeUndefined();
   });
 
@@ -295,18 +295,16 @@ describe('PlayerTournamentsComponent', () => {
     expect(compiled.textContent).toContain('Aucun tournoi');
   });
 
-  it('processingKey should be set during registration and cleared after', async () => {
+  it('processingKey should be cleared after registration completes', async () => {
     const playerSvc = createMockPlayerService();
     const regSvc = createMockRegistrationService();
-    let capturedKeyDuringCall: string | null = null;
 
     regSvc.registerForTournament.mockImplementationOnce(async () => {
-      // We can't capture mid-async here easily, but we verify it clears after
       return mockRegistration;
     });
 
     const { component } = await createComponent('player-1', playerSvc, regSvc);
-    await component.register('t1', 'simple homme');
+    await component.register('t1', 'simple-homme');
 
     expect(component.processingKey()).toBeNull();
   });

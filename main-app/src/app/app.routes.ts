@@ -38,6 +38,14 @@ export const routes: Routes = [
             (m) => m.PublishTournamentComponent
           ),
       },
+      {
+        // Admin: manage registrations by game type (US-009)
+        path: 'tournaments/:id/registrations',
+        loadComponent: () =>
+          import('./features/admin/tournaments/registrations.component').then(
+            (m) => m.RegistrationsComponent
+          ),
+      },
     ],
   },
   {
