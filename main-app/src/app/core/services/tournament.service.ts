@@ -6,17 +6,19 @@ import {
   addDoc,
   doc,
   getDoc,
+  updateDoc,
   query,
   orderBy,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
-import { Tournament, GameType } from '../models/tournament.model';
+import { Tournament, GameType, TournamentStatus } from '../models/tournament.model';
 
 export interface CreateTournamentData {
   name: string;
   date: string;
   description?: string;
-  gameTypes: GameType[];
+  gameTypes?: GameType[];
+  createdBy?: string;
 }
 
 @Injectable({
@@ -27,7 +29,7 @@ export class TournamentService {
 
   getTournaments(): Observable<Tournament[]> {
     const tournamentsRef = collection(this.firestore, 'tournaments');
-    const q = query(tournamentsRef, orderBy('date', 'asc'));
+    const q = query(tournamentsRef, orderBy('createdAt', 'desc'));
     return collectionData(q, { idField: 'id' }) as Observable<Tournament[]>;
   }
 
@@ -51,8 +53,10 @@ export class TournamentService {
       name: data.name,
       date: data.date,
       ...(data.description !== undefined ? { description: data.description } : {}),
-      gameTypes: data.gameTypes,
-      status: 'Brouillon',
+      ...(data.gameTypes !== undefined ? { gameTypes: data.gameTypes } : {}),
+      status: 'Brouillon' as TournamentStatus,
+      participationToken: null,
+      ...(data.createdBy !== undefined ? { createdBy: data.createdBy } : {}),
       createdAt: now,
     });
 
@@ -61,9 +65,27 @@ export class TournamentService {
       name: data.name,
       date: data.date,
       ...(data.description !== undefined ? { description: data.description } : {}),
-      gameTypes: data.gameTypes,
+      ...(data.gameTypes !== undefined ? { gameTypes: data.gameTypes } : {}),
       status: 'Brouillon',
+      participationToken: null,
+      ...(data.createdBy !== undefined ? { createdBy: data.createdBy } : {}),
       createdAt: now,
     };
+  }
+
+  /**
+   * Publishes a tournament: sets status to 'Inscriptions ouvertes' and generates a unique participation token.
+   * AC: Passage Brouillon → Inscriptions ouvertes + génération lien unique de participation
+   */
+  async publishTournament(tournamentId: string): Promise<string> {
+    const participationToken = crypto.randomUUID();
+    const tournamentRef = doc(this.firestore, 'tournaments', tournamentId);
+
+    await updateDoc(tournamentRef, {
+      status: 'Inscriptions ouvertes' as TournamentStatus,
+      participationToken,
+    });
+
+    return participationToken;
   }
 }

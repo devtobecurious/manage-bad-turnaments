@@ -31,10 +31,19 @@ export const routes: Routes = [
           ),
       },
       {
+        // Admin: create a new tournament (US-005)
         path: 'tournaments/new',
         loadComponent: () =>
           import('./features/admin/tournaments/create-tournament.component').then(
             (m) => m.CreateTournamentComponent
+          ),
+      },
+      {
+        // Admin: publish a tournament (US-007)
+        path: 'tournaments/:id/publish',
+        loadComponent: () =>
+          import('./features/admin/tournaments/publish-tournament.component').then(
+            (m) => m.PublishTournamentComponent
           ),
       },
     ],

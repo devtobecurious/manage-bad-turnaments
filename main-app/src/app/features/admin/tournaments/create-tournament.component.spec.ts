@@ -12,6 +12,7 @@ const mockTournament: Tournament = {
   date: '2026-09-01',
   gameTypes: ['simple-homme'],
   status: 'Brouillon',
+  participationToken: null,
   createdAt: '2026-05-13T12:00:00Z',
 };
 

@@ -17,8 +17,9 @@ export interface Tournament {
   name: string;
   date: string;
   description?: string;
-  gameTypes: GameType[];
+  gameTypes?: GameType[];
   status: TournamentStatus;
-  participationToken?: string;
+  participationToken: string | null;
+  createdBy?: string;
   createdAt: string;
 }
