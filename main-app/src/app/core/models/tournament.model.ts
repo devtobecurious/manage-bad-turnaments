@@ -1,4 +1,4 @@
-export type TournamentStatus = 'Brouillon' | 'Inscriptions ouvertes' | 'En cours' | 'Terminé';
+export type TournamentStatus = 'Brouillon' | 'Inscriptions ouvertes' | 'Inscriptions clôturées' | 'En cours' | 'Terminé';
 
 export interface Tournament {
   id: string;

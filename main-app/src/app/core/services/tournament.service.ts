@@ -82,4 +82,25 @@ export class TournamentService {
 
     return participationToken;
   }
+
+  /**
+   * Closes registrations for a tournament: sets status to 'Inscriptions clôturées'.
+   * AC: Passage Inscriptions ouvertes → Inscriptions clôturées
+   */
+  async closeRegistrations(tournamentId: string): Promise<void> {
+    const tournamentRef = doc(this.firestore, 'tournaments', tournamentId);
+
+    await updateDoc(tournamentRef, {
+      status: 'Inscriptions clôturées' as TournamentStatus,
+    });
+  }
+
+  /**
+   * Returns true only if the tournament is in 'Inscriptions ouvertes' status.
+   * AC: Aucune nouvelle inscription possible après la clôture
+   */
+  async canRegister(tournamentId: string): Promise<boolean> {
+    const tournament = await this.getTournament(tournamentId);
+    return tournament?.status === 'Inscriptions ouvertes';
+  }
 }
