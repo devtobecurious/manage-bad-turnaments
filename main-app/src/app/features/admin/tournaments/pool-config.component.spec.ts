@@ -80,7 +80,7 @@ describe('PoolConfigComponent', () => {
   });
 
   it('should default to poolCount=1 and qualifiersPerPool=1 for new game types', () => {
-    const fixture = createComponent('t1', ['double-mixte']);
+    const fixture = createComponent('t1', ['mixte']);
     const configs = fixture.componentInstance.configs();
     expect(configs[0].poolCount).toBe(1);
     expect(configs[0].qualifiersPerPool).toBe(1);
@@ -114,9 +114,9 @@ describe('PoolConfigComponent', () => {
 
   it('should accept poolCount=1 and qualifiersPerPool=0 combination — AC: pas de finale', () => {
     const initial: PoolConfig[] = [
-      { gameType: 'double-mixte', poolCount: 1, qualifiersPerPool: 0 },
+      { gameType: 'mixte', poolCount: 1, qualifiersPerPool: 0 },
     ];
-    const fixture = createComponent('t1', ['double-mixte'], initial);
+    const fixture = createComponent('t1', ['mixte'], initial);
     const configs = fixture.componentInstance.configs();
     expect(configs[0].poolCount).toBe(1);
     expect(configs[0].qualifiersPerPool).toBe(0);
@@ -241,6 +241,6 @@ describe('PoolConfigComponent', () => {
     expect(component.gameTypeLabel('simple-femme')).toBe('Simple Femme');
     expect(component.gameTypeLabel('double-homme')).toBe('Double Homme');
     expect(component.gameTypeLabel('double-femme')).toBe('Double Femme');
-    expect(component.gameTypeLabel('double-mixte')).toBe('Double Mixte');
+    expect(component.gameTypeLabel('mixte')).toBe('Mixte');
   });
 });

@@ -1,6 +1,16 @@
-export type GameType = 'simple-homme' | 'simple-femme' | 'double-homme' | 'double-femme' | 'double-mixte';
+export type GameType =
+  | 'simple-homme'
+  | 'simple-femme'
+  | 'double-homme'
+  | 'double-femme'
+  | 'mixte';
 
-export type TournamentStatus = 'draft' | 'open' | 'in-progress' | 'completed' | 'cancelled';
+export type TournamentStatus =
+  | 'Brouillon'
+  | 'Inscriptions ouvertes'
+  | 'Inscriptions clôturées'
+  | 'En cours'
+  | 'Terminé';
 
 /**
  * Pool configuration for a single game type.
@@ -17,10 +27,12 @@ export interface Tournament {
   id: string;
   name: string;
   date: string;
+  description?: string;
+  gameTypes?: GameType[];
   status: TournamentStatus;
-  gameTypes: GameType[];
-  /** Independent pool configuration for each game type */
-  poolConfig: PoolConfig[];
+  participationToken: string | null;
+  /** Independent pool configuration for each game type (US-006) */
+  poolConfig?: PoolConfig[];
+  createdBy?: string;
   createdAt: string;
-  createdBy: string;
 }
