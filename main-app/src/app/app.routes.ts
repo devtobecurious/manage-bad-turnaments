@@ -78,6 +78,14 @@ export const routes: Routes = [
             (m) => m.CloseRegistrationsComponent
           ),
       },
+      {
+        // Admin: draw and validate pools (US-012)
+        path: 'tournaments/:id/pool-draw',
+        loadComponent: () =>
+          import('./features/admin/tournaments/pool-draw.component').then(
+            (m) => m.PoolDrawComponent
+          ),
+      },
     ],
   },
   {
