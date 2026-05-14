@@ -2,21 +2,23 @@ import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
+  collectionData,
   addDoc,
   doc,
   getDoc,
   updateDoc,
   query,
   orderBy,
-  collectionData,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
-import { Tournament, TournamentStatus } from '../models/tournament.model';
+import { Tournament, GameType, TournamentStatus } from '../models/tournament.model';
 
 export interface CreateTournamentData {
   name: string;
   date: string;
-  createdBy: string;
+  description?: string;
+  gameTypes?: GameType[];
+  createdBy?: string;
 }
 
 @Injectable({
@@ -50,9 +52,11 @@ export class TournamentService {
     const docRef = await addDoc(tournamentsRef, {
       name: data.name,
       date: data.date,
+      ...(data.description !== undefined ? { description: data.description } : {}),
+      ...(data.gameTypes !== undefined ? { gameTypes: data.gameTypes } : {}),
       status: 'Brouillon' as TournamentStatus,
       participationToken: null,
-      createdBy: data.createdBy,
+      ...(data.createdBy !== undefined ? { createdBy: data.createdBy } : {}),
       createdAt: now,
     });
 
@@ -60,9 +64,11 @@ export class TournamentService {
       id: docRef.id,
       name: data.name,
       date: data.date,
+      ...(data.description !== undefined ? { description: data.description } : {}),
+      ...(data.gameTypes !== undefined ? { gameTypes: data.gameTypes } : {}),
       status: 'Brouillon',
       participationToken: null,
-      createdBy: data.createdBy,
+      ...(data.createdBy !== undefined ? { createdBy: data.createdBy } : {}),
       createdAt: now,
     };
   }
