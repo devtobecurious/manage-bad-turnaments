@@ -1,3 +1,5 @@
+import { Gender } from './player.model';
+
 export type GameType =
   | 'simple-homme'
   | 'simple-femme'
@@ -33,4 +35,16 @@ export interface Registration {
   playerId: string;
   gameType: GameType;
   registeredAt: string;
+}
+
+/**
+ * Returns the compatible game types for a given player gender.
+ * - Homme: simple-homme, double-homme, double-mixte
+ * - Femme: simple-femme, double-femme, double-mixte
+ */
+export function getCompatibleGameTypes(gender: Gender): GameType[] {
+  if (gender === 'homme') {
+    return ['simple-homme', 'double-homme', 'double-mixte'];
+  }
+  return ['simple-femme', 'double-femme', 'double-mixte'];
 }
