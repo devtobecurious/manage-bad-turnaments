@@ -29,6 +29,12 @@ import { InviteService } from '../../core/services/invite.service';
           >
             Membres
           </a>
+          <a
+            routerLink="/admin/players/new"
+            class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+          >
+            Ajouter un joueur
+          </a>
         </nav>
       </header>
       <main class="max-w-6xl mx-auto px-8 py-6">
