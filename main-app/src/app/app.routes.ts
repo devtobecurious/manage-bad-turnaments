@@ -62,6 +62,14 @@ export const routes: Routes = [
             (m) => m.RegistrationsComponent
           ),
       },
+      {
+        // Admin: close registrations for a tournament (US-010)
+        path: 'tournaments/:id/close',
+        loadComponent: () =>
+          import('./features/admin/tournaments/close-registrations.component').then(
+            (m) => m.CloseRegistrationsComponent
+          ),
+      },
     ],
   },
   {

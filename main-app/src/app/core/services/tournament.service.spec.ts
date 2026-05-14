@@ -315,6 +315,143 @@ describe('TournamentService', () => {
     expect(result?.name).toBe('Tournoi Printemps');
   });
 
+  // --- closeRegistrations() — AC: Inscriptions ouvertes → Inscriptions clôturées ---
+
+  it('closeRegistrations should update status to "Inscriptions clôturées" — AC: passage statut clôturé', async () => {
+    const { updateDoc } = await import('@angular/fire/firestore');
+
+    await service.closeRegistrations('t1');
+
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        status: 'Inscriptions clôturées',
+      })
+    );
+  });
+
+  it('closeRegistrations should call doc with correct tournament ID', async () => {
+    const { doc } = await import('@angular/fire/firestore');
+
+    await service.closeRegistrations('tournament-xyz');
+
+    expect(doc).toHaveBeenCalledWith(expect.anything(), 'tournaments', 'tournament-xyz');
+  });
+
+  it('closeRegistrations should only update status, not participationToken', async () => {
+    const { updateDoc } = await import('@angular/fire/firestore');
+
+    await service.closeRegistrations('t1');
+
+    const callArg = vi.mocked(updateDoc).mock.calls[0][1] as unknown as Record<string, unknown>;
+    expect(Object.keys(callArg)).toEqual(['status']);
+  });
+
+  // --- canRegister() — AC: Aucune nouvelle inscription possible après la clôture ---
+
+  it('canRegister should return true when status is "Inscriptions ouvertes" — AC: inscription autorisée', async () => {
+    const { getDoc } = await import('@angular/fire/firestore');
+    vi.mocked(getDoc).mockResolvedValueOnce({
+      exists: () => true,
+      id: 't1',
+      data: () => ({
+        name: 'Tournoi Test',
+        date: '2026-06-01',
+        status: 'Inscriptions ouvertes',
+        participationToken: 'some-token',
+        createdBy: 'admin-uid-1',
+        createdAt: '2026-05-13T12:00:00Z',
+      }),
+    } as never);
+
+    const result = await service.canRegister('t1');
+    expect(result).toBe(true);
+  });
+
+  it('canRegister should return false when status is "Inscriptions clôturées" — AC: inscription bloquée', async () => {
+    const { getDoc } = await import('@angular/fire/firestore');
+    vi.mocked(getDoc).mockResolvedValueOnce({
+      exists: () => true,
+      id: 't1',
+      data: () => ({
+        name: 'Tournoi Test',
+        date: '2026-06-01',
+        status: 'Inscriptions clôturées',
+        participationToken: 'some-token',
+        createdBy: 'admin-uid-1',
+        createdAt: '2026-05-13T12:00:00Z',
+      }),
+    } as never);
+
+    const result = await service.canRegister('t1');
+    expect(result).toBe(false);
+  });
+
+  it('canRegister should return false when status is "Brouillon"', async () => {
+    const { getDoc } = await import('@angular/fire/firestore');
+    vi.mocked(getDoc).mockResolvedValueOnce({
+      exists: () => true,
+      id: 't1',
+      data: () => ({
+        name: 'Tournoi Test',
+        date: '2026-06-01',
+        status: 'Brouillon',
+        participationToken: null,
+        createdBy: 'admin-uid-1',
+        createdAt: '2026-05-13T12:00:00Z',
+      }),
+    } as never);
+
+    const result = await service.canRegister('t1');
+    expect(result).toBe(false);
+  });
+
+  it('canRegister should return false when status is "En cours"', async () => {
+    const { getDoc } = await import('@angular/fire/firestore');
+    vi.mocked(getDoc).mockResolvedValueOnce({
+      exists: () => true,
+      id: 't1',
+      data: () => ({
+        name: 'Tournoi Test',
+        date: '2026-06-01',
+        status: 'En cours',
+        participationToken: 'some-token',
+        createdBy: 'admin-uid-1',
+        createdAt: '2026-05-13T12:00:00Z',
+      }),
+    } as never);
+
+    const result = await service.canRegister('t1');
+    expect(result).toBe(false);
+  });
+
+  it('canRegister should return false when status is "Terminé"', async () => {
+    const { getDoc } = await import('@angular/fire/firestore');
+    vi.mocked(getDoc).mockResolvedValueOnce({
+      exists: () => true,
+      id: 't1',
+      data: () => ({
+        name: 'Tournoi Test',
+        date: '2026-06-01',
+        status: 'Terminé',
+        participationToken: 'some-token',
+        createdBy: 'admin-uid-1',
+        createdAt: '2026-05-13T12:00:00Z',
+      }),
+    } as never);
+
+    const result = await service.canRegister('t1');
+    expect(result).toBe(false);
+  });
+
+  it('canRegister should return false when tournament does not exist', async () => {
+    const { getDoc } = await import('@angular/fire/firestore');
+    vi.mocked(getDoc).mockResolvedValueOnce({ exists: () => false } as never);
+
+    const result = await service.canRegister('non-existent-id');
+    expect(result).toBe(false);
+  });
+
   // --- updatePoolConfig() — US-006 acceptance criteria ---
 
   it('updatePoolConfig() should call updateDoc with poolConfig — AC: configurer le format de poules', async () => {
