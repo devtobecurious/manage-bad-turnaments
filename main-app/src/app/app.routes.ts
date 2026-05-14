@@ -39,6 +39,14 @@ export const routes: Routes = [
           ),
       },
       {
+        // Admin: configure pool format (US-006)
+        path: 'tournaments/:id/pool-config',
+        loadComponent: () =>
+          import('./features/admin/tournaments/pool-config.component').then(
+            (m) => m.PoolConfigComponent
+          ),
+      },
+      {
         // Admin: publish a tournament (US-007)
         path: 'tournaments/:id/publish',
         loadComponent: () =>

@@ -11,7 +11,7 @@ import {
   orderBy,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
-import { Tournament, GameType, TournamentStatus } from '../models/tournament.model';
+import { Tournament, GameType, TournamentStatus, PoolConfig } from '../models/tournament.model';
 
 export interface CreateTournamentData {
   name: string;
@@ -87,5 +87,15 @@ export class TournamentService {
     });
 
     return participationToken;
+  }
+
+  /**
+   * Updates the pool configuration for a tournament.
+   * Each PoolConfig entry is independent for a given game type.
+   * If poolCount === 1 and qualifiersPerPool === 0, no final phase should be generated.
+   */
+  async updatePoolConfig(tournamentId: string, configs: PoolConfig[]): Promise<void> {
+    const tournamentRef = doc(this.firestore, 'tournaments', tournamentId);
+    await updateDoc(tournamentRef, { poolConfig: configs });
   }
 }

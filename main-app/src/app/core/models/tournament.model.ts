@@ -12,6 +12,17 @@ export type TournamentStatus =
   | 'En cours'
   | 'Terminé';
 
+/**
+ * Pool configuration for a single game type.
+ * qualifiersPerPool === 0 and poolCount === 1 → no final phase generated.
+ */
+export interface PoolConfig {
+  gameType: GameType;
+  poolCount: number;
+  /** Number of qualified players/pairs per pool: 0, 1, or 2 */
+  qualifiersPerPool: 0 | 1 | 2;
+}
+
 export interface Tournament {
   id: string;
   name: string;
@@ -20,6 +31,8 @@ export interface Tournament {
   gameTypes?: GameType[];
   status: TournamentStatus;
   participationToken: string | null;
+  /** Independent pool configuration for each game type (US-006) */
+  poolConfig?: PoolConfig[];
   createdBy?: string;
   createdAt: string;
 }
