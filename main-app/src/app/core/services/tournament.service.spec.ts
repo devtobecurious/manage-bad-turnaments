@@ -2,19 +2,22 @@ import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { of } from 'rxjs';
 import { TournamentService } from './tournament.service';
+import { Tournament, PoolConfig } from '../models/tournament.model';
 
 vi.mock('@angular/fire/firestore', () => ({
   Firestore: class MockFirestore {},
   collection: vi.fn().mockReturnValue({ path: 'tournaments' }),
   collectionData: vi.fn(),
   addDoc: vi.fn().mockResolvedValue({ id: 'generated-tournament-id' }),
-  doc: vi.fn().mockReturnValue({ path: 'tournaments/t1' }),
+  doc: vi.fn().mockReturnValue({ path: 'tournaments/tournament-1' }),
   getDoc: vi.fn().mockResolvedValue({
     exists: () => true,
-    id: 't1',
+    id: 'tournament-1',
     data: () => ({
       name: 'Tournoi Printemps',
       date: '2026-06-01',
+      description: 'Tournoi de printemps',
+      gameTypes: ['simple-homme', 'simple-femme'],
       status: 'Brouillon',
       participationToken: null,
       createdBy: 'admin-uid-1',
@@ -26,6 +29,28 @@ vi.mock('@angular/fire/firestore', () => ({
   orderBy: vi.fn().mockReturnValue({}),
 }));
 
+const mockTournaments: Tournament[] = [
+  {
+    id: 't1',
+    name: 'Tournoi Été',
+    date: '2026-07-15',
+    gameTypes: ['simple-homme', 'double-femme'],
+    status: 'Brouillon',
+    participationToken: null,
+    createdAt: '2026-05-01T00:00:00Z',
+  },
+  {
+    id: 't2',
+    name: 'Tournoi Automne',
+    date: '2026-10-10',
+    description: 'Grand tournoi automnal',
+    gameTypes: ['mixte'],
+    status: 'Inscriptions ouvertes',
+    participationToken: null,
+    createdAt: '2026-05-02T00:00:00Z',
+  },
+];
+
 describe('TournamentService', () => {
   let service: TournamentService;
 
@@ -33,7 +58,7 @@ describe('TournamentService', () => {
     vi.clearAllMocks();
 
     const { collectionData } = await import('@angular/fire/firestore');
-    vi.mocked(collectionData).mockReturnValue(of([]) as any);
+    vi.mocked(collectionData).mockReturnValue(of(mockTournaments) as any);
 
     const { Firestore } = await import('@angular/fire/firestore');
 
@@ -56,7 +81,20 @@ describe('TournamentService', () => {
   it('getTournaments() should return an Observable of tournaments', () => {
     return new Promise<void>((resolve) => {
       service.getTournaments().subscribe((tournaments) => {
-        expect(Array.isArray(tournaments)).toBe(true);
+        expect(tournaments).toHaveLength(2);
+        resolve();
+      });
+    });
+  });
+
+  it('getTournaments() should return tournaments with required fields', () => {
+    return new Promise<void>((resolve) => {
+      service.getTournaments().subscribe((tournaments) => {
+        const t = tournaments[0];
+        expect(t).toHaveProperty('id');
+        expect(t).toHaveProperty('name');
+        expect(t).toHaveProperty('date');
+        expect(t).toHaveProperty('status');
         resolve();
       });
     });
@@ -96,6 +134,121 @@ describe('TournamentService', () => {
         participationToken: null,
       })
     );
+  });
+
+  it('createTournament() should write name, date, and gameTypes to Firestore — AC: saisie nom/date', async () => {
+    const { addDoc } = await import('@angular/fire/firestore');
+
+    await service.createTournament({
+      name: 'Tournoi Hiver',
+      date: '2026-12-15',
+      gameTypes: ['simple-homme', 'simple-femme'],
+    });
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        name: 'Tournoi Hiver',
+        date: '2026-12-15',
+        gameTypes: ['simple-homme', 'simple-femme'],
+      })
+    );
+  });
+
+  it('createTournament() should write optional description when provided — AC: description optionnelle', async () => {
+    const { addDoc } = await import('@angular/fire/firestore');
+
+    await service.createTournament({
+      name: 'Tournoi Hiver',
+      date: '2026-12-15',
+      description: 'Une description',
+      gameTypes: ['mixte'],
+    });
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ description: 'Une description' })
+    );
+  });
+
+  it('createTournament() should not include description when omitted — AC: description optionnelle', async () => {
+    const { addDoc } = await import('@angular/fire/firestore');
+
+    await service.createTournament({
+      name: 'Tournoi Hiver',
+      date: '2026-12-15',
+      gameTypes: ['mixte'],
+    });
+
+    const callArg = vi.mocked(addDoc).mock.calls[0][1] as Record<string, unknown>;
+    expect(callArg).not.toHaveProperty('description');
+  });
+
+  it('createTournament() should save multi-select gameTypes array — AC: multi-types de jeu', async () => {
+    const gameTypes = ['simple-homme', 'simple-femme', 'double-homme', 'double-femme', 'mixte'] as const;
+
+    const result = await service.createTournament({
+      name: 'Tournoi Complet',
+      date: '2026-08-01',
+      gameTypes: [...gameTypes],
+    });
+
+    expect(result.gameTypes).toEqual([...gameTypes]);
+  });
+
+  it('createTournament() should set status to Brouillon — AC: statut Brouillon', async () => {
+    const { addDoc } = await import('@angular/fire/firestore');
+
+    await service.createTournament({
+      name: 'Tournoi Test',
+      date: '2026-09-01',
+      gameTypes: ['mixte'],
+    });
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ status: 'Brouillon' })
+    );
+  });
+
+  it('createTournament() should return status Brouillon on the returned tournament — AC: statut Brouillon', async () => {
+    const result = await service.createTournament({
+      name: 'Tournoi Test',
+      date: '2026-09-01',
+      gameTypes: ['mixte'],
+    });
+
+    expect(result.status).toBe('Brouillon');
+  });
+
+  it('createTournament() should return a tournament with a unique id from Firestore — AC: identifiant unique', async () => {
+    const result = await service.createTournament({
+      name: 'Tournoi ID Test',
+      date: '2026-09-15',
+      gameTypes: ['mixte'],
+    });
+
+    expect(result.id).toBe('generated-tournament-id');
+    expect(typeof result.id).toBe('string');
+    expect(result.id.length).toBeGreaterThan(0);
+  });
+
+  it('createTournament() should return tournament with all provided fields — AC: saisie complète', async () => {
+    const { addDoc } = await import('@angular/fire/firestore');
+    vi.mocked(addDoc).mockResolvedValueOnce({ id: 'new-id' } as never);
+
+    const result = await service.createTournament({
+      name: 'Tournoi Complet',
+      date: '2026-11-01',
+      description: 'Desc',
+      gameTypes: ['simple-homme', 'mixte'],
+    });
+
+    expect(result.name).toBe('Tournoi Complet');
+    expect(result.date).toBe('2026-11-01');
+    expect(result.description).toBe('Desc');
+    expect(result.gameTypes).toEqual(['simple-homme', 'mixte']);
+    expect(result.createdAt).toBeTruthy();
   });
 
   // --- publishTournament() — AC: Brouillon → Inscriptions ouvertes ---
@@ -147,7 +300,7 @@ describe('TournamentService', () => {
 
   // --- getTournament() ---
 
-  it('getTournament should return null when tournament does not exist', async () => {
+  it('getTournament() should return null when tournament does not exist', async () => {
     const { getDoc } = await import('@angular/fire/firestore');
     vi.mocked(getDoc).mockResolvedValueOnce({ exists: () => false } as never);
 
@@ -155,10 +308,245 @@ describe('TournamentService', () => {
     expect(result).toBeNull();
   });
 
-  it('getTournament should return tournament data when document exists', async () => {
-    const result = await service.getTournament('t1');
+  it('getTournament() should return tournament data when document exists', async () => {
+    const result = await service.getTournament('tournament-1');
     expect(result).not.toBeNull();
-    expect(result?.id).toBe('t1');
+    expect(result?.id).toBe('tournament-1');
     expect(result?.name).toBe('Tournoi Printemps');
+  });
+
+  // --- closeRegistrations() — AC: Inscriptions ouvertes → Inscriptions clôturées ---
+
+  it('closeRegistrations should update status to "Inscriptions clôturées" — AC: passage statut clôturé', async () => {
+    const { updateDoc } = await import('@angular/fire/firestore');
+
+    await service.closeRegistrations('t1');
+
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        status: 'Inscriptions clôturées',
+      })
+    );
+  });
+
+  it('closeRegistrations should call doc with correct tournament ID', async () => {
+    const { doc } = await import('@angular/fire/firestore');
+
+    await service.closeRegistrations('tournament-xyz');
+
+    expect(doc).toHaveBeenCalledWith(expect.anything(), 'tournaments', 'tournament-xyz');
+  });
+
+  it('closeRegistrations should only update status, not participationToken', async () => {
+    const { updateDoc } = await import('@angular/fire/firestore');
+
+    await service.closeRegistrations('t1');
+
+    const callArg = vi.mocked(updateDoc).mock.calls[0][1] as unknown as Record<string, unknown>;
+    expect(Object.keys(callArg)).toEqual(['status']);
+  });
+
+  // --- canRegister() — AC: Aucune nouvelle inscription possible après la clôture ---
+
+  it('canRegister should return true when status is "Inscriptions ouvertes" — AC: inscription autorisée', async () => {
+    const { getDoc } = await import('@angular/fire/firestore');
+    vi.mocked(getDoc).mockResolvedValueOnce({
+      exists: () => true,
+      id: 't1',
+      data: () => ({
+        name: 'Tournoi Test',
+        date: '2026-06-01',
+        status: 'Inscriptions ouvertes',
+        participationToken: 'some-token',
+        createdBy: 'admin-uid-1',
+        createdAt: '2026-05-13T12:00:00Z',
+      }),
+    } as never);
+
+    const result = await service.canRegister('t1');
+    expect(result).toBe(true);
+  });
+
+  it('canRegister should return false when status is "Inscriptions clôturées" — AC: inscription bloquée', async () => {
+    const { getDoc } = await import('@angular/fire/firestore');
+    vi.mocked(getDoc).mockResolvedValueOnce({
+      exists: () => true,
+      id: 't1',
+      data: () => ({
+        name: 'Tournoi Test',
+        date: '2026-06-01',
+        status: 'Inscriptions clôturées',
+        participationToken: 'some-token',
+        createdBy: 'admin-uid-1',
+        createdAt: '2026-05-13T12:00:00Z',
+      }),
+    } as never);
+
+    const result = await service.canRegister('t1');
+    expect(result).toBe(false);
+  });
+
+  it('canRegister should return false when status is "Brouillon"', async () => {
+    const { getDoc } = await import('@angular/fire/firestore');
+    vi.mocked(getDoc).mockResolvedValueOnce({
+      exists: () => true,
+      id: 't1',
+      data: () => ({
+        name: 'Tournoi Test',
+        date: '2026-06-01',
+        status: 'Brouillon',
+        participationToken: null,
+        createdBy: 'admin-uid-1',
+        createdAt: '2026-05-13T12:00:00Z',
+      }),
+    } as never);
+
+    const result = await service.canRegister('t1');
+    expect(result).toBe(false);
+  });
+
+  it('canRegister should return false when status is "En cours"', async () => {
+    const { getDoc } = await import('@angular/fire/firestore');
+    vi.mocked(getDoc).mockResolvedValueOnce({
+      exists: () => true,
+      id: 't1',
+      data: () => ({
+        name: 'Tournoi Test',
+        date: '2026-06-01',
+        status: 'En cours',
+        participationToken: 'some-token',
+        createdBy: 'admin-uid-1',
+        createdAt: '2026-05-13T12:00:00Z',
+      }),
+    } as never);
+
+    const result = await service.canRegister('t1');
+    expect(result).toBe(false);
+  });
+
+  it('canRegister should return false when status is "Terminé"', async () => {
+    const { getDoc } = await import('@angular/fire/firestore');
+    vi.mocked(getDoc).mockResolvedValueOnce({
+      exists: () => true,
+      id: 't1',
+      data: () => ({
+        name: 'Tournoi Test',
+        date: '2026-06-01',
+        status: 'Terminé',
+        participationToken: 'some-token',
+        createdBy: 'admin-uid-1',
+        createdAt: '2026-05-13T12:00:00Z',
+      }),
+    } as never);
+
+    const result = await service.canRegister('t1');
+    expect(result).toBe(false);
+  });
+
+  it('canRegister should return false when tournament does not exist', async () => {
+    const { getDoc } = await import('@angular/fire/firestore');
+    vi.mocked(getDoc).mockResolvedValueOnce({ exists: () => false } as never);
+
+    const result = await service.canRegister('non-existent-id');
+    expect(result).toBe(false);
+  });
+
+  // --- updatePoolConfig() — US-006 acceptance criteria ---
+
+  it('updatePoolConfig() should call updateDoc with poolConfig — AC: configurer le format de poules', async () => {
+    const { updateDoc } = await import('@angular/fire/firestore');
+
+    const configs: PoolConfig[] = [
+      { gameType: 'simple-homme', poolCount: 3, qualifiersPerPool: 2 },
+    ];
+
+    await service.updatePoolConfig('t1', configs);
+
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      { poolConfig: configs }
+    );
+  });
+
+  it('updatePoolConfig() should support multiple game types independently — AC: config indépendante par type de jeu', async () => {
+    const { updateDoc } = await import('@angular/fire/firestore');
+
+    const configs: PoolConfig[] = [
+      { gameType: 'simple-homme', poolCount: 2, qualifiersPerPool: 1 },
+      { gameType: 'simple-femme', poolCount: 3, qualifiersPerPool: 2 },
+      { gameType: 'mixte', poolCount: 1, qualifiersPerPool: 0 },
+    ];
+
+    await service.updatePoolConfig('t1', configs);
+
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      { poolConfig: configs }
+    );
+  });
+
+  it('updatePoolConfig() should allow qualifiersPerPool of 1 — AC: qualifiés 1 ou 2', async () => {
+    const { updateDoc } = await import('@angular/fire/firestore');
+
+    const configs: PoolConfig[] = [
+      { gameType: 'simple-homme', poolCount: 4, qualifiersPerPool: 1 },
+    ];
+
+    await service.updatePoolConfig('t1', configs);
+
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      { poolConfig: [{ gameType: 'simple-homme', poolCount: 4, qualifiersPerPool: 1 }] }
+    );
+  });
+
+  it('updatePoolConfig() should allow qualifiersPerPool of 2 — AC: qualifiés 1 ou 2', async () => {
+    const { updateDoc } = await import('@angular/fire/firestore');
+
+    const configs: PoolConfig[] = [
+      { gameType: 'double-homme', poolCount: 2, qualifiersPerPool: 2 },
+    ];
+
+    await service.updatePoolConfig('t1', configs);
+
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      { poolConfig: [{ gameType: 'double-homme', poolCount: 2, qualifiersPerPool: 2 }] }
+    );
+  });
+
+  it('updatePoolConfig() should allow 1 pool + 0 qualifiers (no final phase) — AC: 1 poule / 0 qualifié = pas de finale', async () => {
+    const { updateDoc } = await import('@angular/fire/firestore');
+
+    const configs: PoolConfig[] = [
+      { gameType: 'simple-femme', poolCount: 1, qualifiersPerPool: 0 },
+    ];
+
+    await service.updatePoolConfig('t1', configs);
+
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      { poolConfig: [{ gameType: 'simple-femme', poolCount: 1, qualifiersPerPool: 0 }] }
+    );
+  });
+
+  it('updatePoolConfig() should call doc with correct tournament ID', async () => {
+    const { doc } = await import('@angular/fire/firestore');
+
+    await service.updatePoolConfig('tournament-xyz', []);
+
+    expect(doc).toHaveBeenCalledWith(expect.anything(), 'tournaments', 'tournament-xyz');
+  });
+
+  it('updatePoolConfig() should support empty config array', async () => {
+    const { updateDoc } = await import('@angular/fire/firestore');
+
+    await service.updatePoolConfig('t1', []);
+
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      { poolConfig: [] }
+    );
   });
 });
