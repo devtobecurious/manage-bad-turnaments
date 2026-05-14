@@ -30,6 +30,13 @@ export const routes: Routes = [
             (m) => m.PlayerDetailComponent
           ),
       },
+      {
+        path: 'tournaments/:id/pool-config',
+        loadComponent: () =>
+          import('./features/admin/tournaments/pool-config.component').then(
+            (m) => m.PoolConfigComponent
+          ),
+      },
     ],
   },
   {
