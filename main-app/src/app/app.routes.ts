@@ -17,6 +17,14 @@ export const routes: Routes = [
           import('./features/admin/admin.component').then((m) => m.AdminComponent),
       },
       {
+        // Admin: add a player manually (US-002)
+        path: 'players/new',
+        loadComponent: () =>
+          import('./features/admin/players/player-form.component').then(
+            (m) => m.PlayerFormComponent
+          ),
+      },
+      {
         path: 'players',
         loadComponent: () =>
           import('./features/admin/players/players-list.component').then(
