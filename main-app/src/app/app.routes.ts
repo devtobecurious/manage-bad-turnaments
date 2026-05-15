@@ -78,6 +78,14 @@ export const routes: Routes = [
             (m) => m.CloseRegistrationsComponent
           ),
       },
+      {
+        // Admin: form random pairs for doubles/mixte (US-011)
+        path: 'tournaments/:id/pairing',
+        loadComponent: () =>
+          import('./features/admin/tournaments/pairing.component').then(
+            (m) => m.PairingComponent
+          ),
+      },
     ],
   },
   {
