@@ -102,6 +102,14 @@ export const routes: Routes = [
             (m) => m.MatchScheduleComponent
           ),
       },
+      {
+        // Admin: generate final bracket (US-017)
+        path: 'tournaments/:id/bracket',
+        loadComponent: () =>
+          import('./features/admin/tournaments/bracket.component').then(
+            (m) => m.BracketComponent
+          ),
+      },
     ],
   },
   {
