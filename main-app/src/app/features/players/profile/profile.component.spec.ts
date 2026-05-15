@@ -1,8 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { PlayerProfileComponent } from './profile.component';
 import { PlayerService } from '../../../core/services/player.service';
+import { StatsService } from '../../../core/services/stats.service';
 
 describe('PlayerProfileComponent', () => {
   let component: PlayerProfileComponent;
@@ -31,11 +33,21 @@ describe('PlayerProfileComponent', () => {
       getPlayer: vi.fn().mockResolvedValue(mockPlayer),
     };
 
+    const mockStatsService: Partial<StatsService> = {
+      getPlayerStats: vi.fn().mockReturnValue(of({
+        playerId: 'player-123',
+        global: { played: 0, wins: 0, losses: 0, winRate: 0 },
+        byGameType: [],
+        tournaments: [],
+      })),
+    };
+
     TestBed.configureTestingModule({
       imports: [PlayerProfileComponent],
       providers: [
         { provide: ActivatedRoute, useValue: mockRoute },
         { provide: PlayerService, useValue: mockPlayerService },
+        { provide: StatsService, useValue: mockStatsService },
       ],
     });
 
