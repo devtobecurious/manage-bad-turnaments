@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { MatchService } from './match.service';
 import { PoolService } from './pool.service';
 import { PlayerService } from './player.service';
+import { StandingsService } from './standings.service';
 import {
   generateRoundRobinPairs,
   validateSet,
@@ -248,6 +249,9 @@ const mockPoolService = {};
 const mockPlayerService = {
   getPlayer: vi.fn().mockResolvedValue(null),
 };
+const mockStandingsService = {
+  recalculateStandings: vi.fn().mockResolvedValue(undefined),
+};
 
 describe('MatchService', () => {
   let service: MatchService;
@@ -259,6 +263,7 @@ describe('MatchService', () => {
     batchObj.commit.mockResolvedValue(undefined);
 
     mockPlayerService.getPlayer.mockResolvedValue(null);
+    mockStandingsService.recalculateStandings.mockResolvedValue(undefined);
 
     const { collectionData } = await import('@angular/fire/firestore');
     vi.mocked(collectionData).mockReturnValue(of([]) as any);
@@ -271,6 +276,7 @@ describe('MatchService', () => {
         { provide: Firestore, useValue: {} },
         { provide: PoolService, useValue: mockPoolService },
         { provide: PlayerService, useValue: mockPlayerService },
+        { provide: StandingsService, useValue: mockStandingsService },
       ],
     });
 
