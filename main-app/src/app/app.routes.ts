@@ -141,6 +141,14 @@ export const routes: Routes = [
       ),
   },
   {
+    // Player: consult final bracket (US-019)
+    path: 'player/:playerId/tournaments/:tournamentId/bracket',
+    loadComponent: () =>
+      import('./features/players/tournaments/bracket-view.component').then(
+        (m) => m.BracketViewComponent
+      ),
+  },
+  {
     path: '',
     redirectTo: 'admin',
     pathMatch: 'full',
