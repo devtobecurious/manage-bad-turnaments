@@ -41,6 +41,7 @@ const mockMatches: Match[] = [
 const mockMatchService = {
   getMatchesForPool: vi.fn().mockReturnValue(of([])),
   generateMatches: vi.fn().mockResolvedValue(undefined),
+  updateMatchScore: vi.fn().mockResolvedValue(undefined),
 };
 
 describe('MatchScheduleComponent', () => {

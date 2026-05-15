@@ -4,11 +4,12 @@ import { RouterLink } from '@angular/router';
 import { MatchService } from '../../../core/services/match.service';
 import { Match } from '../../../core/models/match.model';
 import { GAME_TYPE_LABELS } from '../../../core/models/registration.model';
+import { ScoreEntryComponent } from './score-entry.component';
 
 @Component({
   selector: 'app-match-schedule',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, ScoreEntryComponent],
   template: `
     <div class="max-w-4xl mx-auto p-6 space-y-6">
       <!-- Header -->
@@ -85,7 +86,20 @@ import { GAME_TYPE_LABELS } from '../../../core/models/registration.model';
                   </span>
                 </div>
 
-                <span class="text-gray-400 text-xs font-semibold shrink-0">VS</span>
+                <!-- Sets display (if played) -->
+                @if (match.status === 'played' && match.sets && match.sets.length > 0) {
+                  <div class="flex flex-col items-center gap-1 shrink-0">
+                    @for (set of match.sets; track $index) {
+                      <span class="text-xs font-mono text-gray-600 bg-gray-50 px-2 py-0.5 rounded">
+                        {{ set.a }}-{{ set.b }}
+                      </span>
+                    }
+                  </div>
+                } @else if (match.status === 'played' && match.forfeitParticipantId) {
+                  <span class="text-xs text-orange-600 font-medium shrink-0">Forfait</span>
+                } @else {
+                  <span class="text-gray-400 text-xs font-semibold shrink-0">VS</span>
+                }
 
                 <div class="flex-1 min-w-0">
                   <span
@@ -98,8 +112,8 @@ import { GAME_TYPE_LABELS } from '../../../core/models/registration.model';
                 </div>
               </div>
 
-              <!-- Status badge -->
-              <div class="shrink-0">
+              <!-- Right side: status + action button -->
+              <div class="shrink-0 flex flex-col items-end gap-2">
                 @if (match.status === 'played') {
                   <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
                     Joué
@@ -109,6 +123,14 @@ import { GAME_TYPE_LABELS } from '../../../core/models/registration.model';
                     À jouer
                   </span>
                 }
+
+                <!-- Score entry / correction button -->
+                <button
+                  (click)="openScoreEntry(match)"
+                  class="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                >
+                  {{ match.status === 'played' ? 'Corriger' : 'Saisir le score' }}
+                </button>
               </div>
             </div>
           }
@@ -119,6 +141,17 @@ import { GAME_TYPE_LABELS } from '../../../core/models/registration.model';
         </div>
       }
     </div>
+
+    <!-- Score entry modal -->
+    @if (scoreEntryMatch()) {
+      <app-score-entry
+        [match]="scoreEntryMatch()!"
+        [tournamentId]="tournamentId()"
+        [poolId]="poolId()"
+        (cancel)="closeScoreEntry()"
+        (saved)="onScoreSaved()"
+      />
+    }
   `,
 })
 export class MatchScheduleComponent implements OnInit {
@@ -139,6 +172,9 @@ export class MatchScheduleComponent implements OnInit {
 
   readonly gameTypeLabels = GAME_TYPE_LABELS;
 
+  /** The match currently being scored (null = modal closed) */
+  readonly scoreEntryMatch = signal<Match | null>(null);
+
   ngOnInit(): void {
     this.matchService.getMatchesForPool(this.tournamentId(), this.poolId()).subscribe({
       next: (matches) => this.matches$.set(matches),
@@ -158,5 +194,18 @@ export class MatchScheduleComponent implements OnInit {
     } finally {
       this.generating.set(false);
     }
+  }
+
+  openScoreEntry(match: Match): void {
+    this.scoreEntryMatch.set(match);
+  }
+
+  closeScoreEntry(): void {
+    this.scoreEntryMatch.set(null);
+  }
+
+  onScoreSaved(): void {
+    this.scoreEntryMatch.set(null);
+    // Matches are updated in real-time via getMatchesForPool() observable
   }
 }

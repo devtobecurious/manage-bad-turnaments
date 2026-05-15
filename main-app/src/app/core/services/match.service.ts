@@ -6,9 +6,17 @@ import {
   addDoc,
   getDocs,
   writeBatch,
+  doc,
+  updateDoc,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
-import { Match, generateRoundRobinPairs } from '../models/match.model';
+import {
+  Match,
+  SetScore,
+  generateRoundRobinPairs,
+  validateMatch,
+  determineMatchWinner,
+} from '../models/match.model';
 import { PoolService } from './pool.service';
 import { PlayerService } from './player.service';
 
@@ -122,5 +130,68 @@ export class MatchService {
     return collectionData(this.matchesRef(tournamentId, poolId), {
       idField: 'id',
     }) as Observable<Match[]>;
+  }
+
+  /**
+   * Updates the score of a match in Firestore.
+   * Validates the sets against badminton rules, determines the winner,
+   * sets status to 'played', and persists the result.
+   *
+   * @param tournamentId - Tournament ID
+   * @param poolId - Pool ID
+   * @param matchId - Match document ID
+   * @param sets - Array of set scores (up to 3 sets, best of 3)
+   * @param forfeitParticipantId - Optional: ID of the forfeiting participant
+   */
+  async updateMatchScore(
+    tournamentId: string,
+    poolId: string,
+    matchId: string,
+    sets: SetScore[],
+    forfeitParticipantId?: string
+  ): Promise<void> {
+    // Load the match to get participant IDs
+    const matchesRef = this.matchesRef(tournamentId, poolId);
+    const matchesSnap = await getDocs(matchesRef);
+    const matchDoc = matchesSnap.docs.find((d) => d.id === matchId);
+
+    if (!matchDoc) {
+      throw new Error(`Match ${matchId} not found in pool ${poolId}`);
+    }
+
+    const match = { id: matchDoc.id, ...matchDoc.data() } as Match;
+
+    // Validate the match result
+    const validation = validateMatch(sets, forfeitParticipantId);
+    if (!validation.valid) {
+      throw new Error(validation.error ?? 'Score invalide.');
+    }
+
+    // Determine the winner
+    const winnerId = determineMatchWinner(
+      sets,
+      match.participantA.id,
+      match.participantB.id,
+      forfeitParticipantId
+    );
+
+    if (!winnerId) {
+      throw new Error('Impossible de déterminer le gagnant.');
+    }
+
+    // Build the update payload
+    const update: Partial<Match> & Record<string, unknown> = {
+      status: 'played',
+      sets,
+      winnerId,
+    };
+
+    if (forfeitParticipantId) {
+      update['forfeitParticipantId'] = forfeitParticipantId;
+    }
+
+    // Write to Firestore
+    const matchDocRef = doc(this.firestore, 'tournaments', tournamentId, 'pools', poolId, 'matches', matchId);
+    await updateDoc(matchDocRef, update);
   }
 }
