@@ -19,6 +19,7 @@ import {
 } from '../models/match.model';
 import { PoolService } from './pool.service';
 import { PlayerService } from './player.service';
+import { StandingsService } from './standings.service';
 
 @Injectable({
   providedIn: 'root',
@@ -27,6 +28,7 @@ export class MatchService {
   private readonly firestore = inject(Firestore);
   private readonly poolService = inject(PoolService);
   private readonly playerService = inject(PlayerService);
+  private readonly standingsService = inject(StandingsService);
 
   /**
    * Returns the Firestore subcollection reference for matches of a pool.
@@ -193,5 +195,8 @@ export class MatchService {
     // Write to Firestore
     const matchDocRef = doc(this.firestore, 'tournaments', tournamentId, 'pools', poolId, 'matches', matchId);
     await updateDoc(matchDocRef, update);
+
+    // Recalculate standings immediately after score update
+    await this.standingsService.recalculateStandings(tournamentId, poolId);
   }
 }
