@@ -79,6 +79,14 @@ export const routes: Routes = [
           ),
       },
       {
+        // Admin: form random pairs for doubles/mixte (US-011)
+        path: 'tournaments/:id/pairing',
+        loadComponent: () =>
+          import('./features/admin/tournaments/pairing.component').then(
+            (m) => m.PairingComponent
+          ),
+      },
+      {
         // Admin: draw and validate pools (US-012)
         path: 'tournaments/:id/pool-draw',
         loadComponent: () =>
