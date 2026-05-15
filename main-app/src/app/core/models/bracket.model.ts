@@ -26,6 +26,7 @@ export interface BracketMatch {
   status: BracketMatchStatus;
   winnerId?: string;
   scores?: { a: number; b: number }[];
+  forfeitParticipantId?: string;
 }
 
 /**

@@ -7,8 +7,10 @@ import {
   computeByes,
   nextPowerOf2,
   seedBracket,
+  propagateByes,
   RankedQualifier,
 } from './bracket.service';
+import { BracketMatch } from '../models/bracket.model';
 import { PoolStanding } from '../models/standings.model';
 import { Pool } from '../models/pool.model';
 import { PoolConfig } from '../models/tournament.model';
@@ -293,17 +295,76 @@ describe('seedBracket', () => {
 // BracketService (Firestore wrapper)
 // ========================
 
+// ========================
+// propagateByes — pure function
+// ========================
+
+describe('propagateByes', () => {
+  function makeMatch(
+    round: number,
+    position: number,
+    status: 'pending' | 'played' | 'bye',
+    opts: Partial<BracketMatch> = {}
+  ): BracketMatch {
+    return {
+      id: `r${round}-m${position}`,
+      round,
+      position,
+      participantA: null,
+      participantB: null,
+      status,
+      ...opts,
+    };
+  }
+
+  it('propagates bye winner into next round slot A when position is odd', () => {
+    const r1m1 = makeMatch(1, 1, 'bye', {
+      participantA: { id: 'p1', name: 'Alice', fromPool: 'pool1' },
+      participantB: null,
+      winnerId: 'p1',
+    });
+    const r2m1 = makeMatch(2, 1, 'pending');
+    propagateByes([r1m1, r2m1]);
+    expect(r2m1.participantA?.id).toBe('p1');
+  });
+
+  it('propagates bye winner into next round slot B when position is even', () => {
+    const r1m2 = makeMatch(1, 2, 'bye', {
+      participantA: null,
+      participantB: { id: 'p2', name: 'Bob', fromPool: 'pool2' },
+      winnerId: 'p2',
+    });
+    const r2m1 = makeMatch(2, 1, 'pending');
+    propagateByes([r1m2, r2m1]);
+    expect(r2m1.participantB?.id).toBe('p2');
+  });
+
+  it('does not modify next match if bye has no winner', () => {
+    const r1m1 = makeMatch(1, 1, 'bye', {
+      participantA: null,
+      participantB: null,
+      winnerId: undefined,
+    });
+    const r2m1 = makeMatch(2, 1, 'pending');
+    propagateByes([r1m1, r2m1]);
+    expect(r2m1.participantA).toBeNull();
+    expect(r2m1.participantB).toBeNull();
+  });
+});
+
 vi.mock('@angular/fire/firestore', () => {
   return {
     Firestore: class MockFirestore {},
     collection: vi.fn().mockReturnValue({ path: 'bracketMatches' }),
     collectionData: vi.fn(),
     getDocs: vi.fn().mockResolvedValue({ docs: [] }),
-    doc: vi.fn().mockReturnValue({ path: 'bracket/main' }),
+    doc: vi.fn().mockReturnValue({ id: 'mockDoc', path: 'bracket/main' }),
     setDoc: vi.fn().mockResolvedValue(undefined),
+    updateDoc: vi.fn().mockResolvedValue(undefined),
     writeBatch: vi.fn().mockReturnValue({
       delete: vi.fn(),
       set: vi.fn(),
+      update: vi.fn(),
       commit: vi.fn().mockResolvedValue(undefined),
     }),
     getDoc: vi.fn(),
@@ -396,5 +457,224 @@ describe('BracketService', () => {
     await expect(service.generateBracket('t1')).rejects.toThrow(
       'tous les matchs de poule doivent être joués'
     );
+  });
+
+  // ========================
+  // updateBracketMatchScore tests
+  // ========================
+
+  describe('updateBracketMatchScore', () => {
+    const participantA = { id: 'pA', name: 'Alice', fromPool: 'pool1' };
+    const participantB = { id: 'pB', name: 'Bob', fromPool: 'pool2' };
+
+    const pendingMatch: BracketMatch = {
+      id: 'r1-m1',
+      round: 1,
+      position: 1,
+      participantA,
+      participantB,
+      status: 'pending',
+    };
+
+    const validSets = [
+      { a: 21, b: 15 },
+      { a: 21, b: 10 },
+    ];
+
+    it('throws when bracket match not found', async () => {
+      const { getDoc } = await import('@angular/fire/firestore');
+      vi.mocked(getDoc).mockResolvedValueOnce({ exists: () => false } as any);
+
+      await expect(
+        service.updateBracketMatchScore('t1', 'r1-m1', validSets)
+      ).rejects.toThrow('introuvable');
+    });
+
+    it('throws when participant is missing', async () => {
+      const { getDoc } = await import('@angular/fire/firestore');
+      vi.mocked(getDoc).mockResolvedValueOnce({
+        exists: () => true,
+        id: 'r1-m1',
+        data: () => ({
+          round: 1,
+          position: 1,
+          participantA: null,
+          participantB: null,
+          status: 'pending',
+        }),
+      } as any);
+
+      await expect(
+        service.updateBracketMatchScore('t1', 'r1-m1', validSets)
+      ).rejects.toThrow('participants manquent');
+    });
+
+    it('propagates winner to next round slot A when position is odd', async () => {
+      const { getDoc, writeBatch: mockWriteBatch } = await import('@angular/fire/firestore');
+
+      // First getDoc: the match itself (r1-m1)
+      vi.mocked(getDoc).mockResolvedValueOnce({
+        exists: () => true,
+        id: 'r1-m1',
+        data: () => ({ ...pendingMatch }),
+      } as any);
+
+      // Second getDoc: bracket metadata
+      vi.mocked(getDoc).mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ rounds: 2, bracketSize: 4 }),
+      } as any);
+
+      // Third getDoc: next match (r2-m1)
+      vi.mocked(getDoc).mockResolvedValueOnce({
+        exists: () => true,
+        id: 'r2-m1',
+        data: () => ({ round: 2, position: 1, participantA: null, participantB: null, status: 'pending' }),
+      } as any);
+
+      const batchMock = {
+        delete: vi.fn(),
+        set: vi.fn(),
+        update: vi.fn(),
+        commit: vi.fn().mockResolvedValue(undefined),
+      };
+      vi.mocked(mockWriteBatch).mockReturnValue(batchMock as any);
+
+      await service.updateBracketMatchScore('t1', 'r1-m1', validSets);
+
+      // batch.update called twice: once for match, once for next round
+      expect(batchMock.update).toHaveBeenCalledTimes(2);
+
+      // Second call should set participantA (odd position)
+      const secondCallArgs = batchMock.update.mock.calls[1];
+      expect(secondCallArgs[1]).toMatchObject({ participantA: participantA });
+    });
+
+    it('propagates winner to next round slot B when position is even', async () => {
+      const { getDoc, writeBatch: mockWriteBatch } = await import('@angular/fire/firestore');
+
+      const r1m2: BracketMatch = {
+        id: 'r1-m2',
+        round: 1,
+        position: 2,
+        participantA,
+        participantB,
+        status: 'pending',
+      };
+
+      vi.mocked(getDoc).mockResolvedValueOnce({
+        exists: () => true,
+        id: 'r1-m2',
+        data: () => ({ ...r1m2 }),
+      } as any);
+
+      vi.mocked(getDoc).mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ rounds: 2, bracketSize: 4 }),
+      } as any);
+
+      vi.mocked(getDoc).mockResolvedValueOnce({
+        exists: () => true,
+        id: 'r2-m1',
+        data: () => ({ round: 2, position: 1, participantA: null, participantB: null, status: 'pending' }),
+      } as any);
+
+      const batchMock = {
+        delete: vi.fn(),
+        set: vi.fn(),
+        update: vi.fn(),
+        commit: vi.fn().mockResolvedValue(undefined),
+      };
+      vi.mocked(mockWriteBatch).mockReturnValue(batchMock as any);
+
+      await service.updateBracketMatchScore('t1', 'r1-m2', validSets);
+
+      const secondCallArgs = batchMock.update.mock.calls[1];
+      expect(secondCallArgs[1]).toMatchObject({ participantB: participantA });
+    });
+
+    it('marks tournament as completed with champion when final is played', async () => {
+      const { getDoc, writeBatch: mockWriteBatch, updateDoc } = await import('@angular/fire/firestore');
+
+      const finalMatch: BracketMatch = {
+        id: 'r2-m1',
+        round: 2,
+        position: 1,
+        participantA,
+        participantB,
+        status: 'pending',
+      };
+
+      vi.mocked(getDoc).mockResolvedValueOnce({
+        exists: () => true,
+        id: 'r2-m1',
+        data: () => ({ ...finalMatch }),
+      } as any);
+
+      // bracket metadata: 2 rounds total, this is the final
+      vi.mocked(getDoc).mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ rounds: 2, bracketSize: 4 }),
+      } as any);
+
+      const batchMock = {
+        delete: vi.fn(),
+        set: vi.fn(),
+        update: vi.fn(),
+        commit: vi.fn().mockResolvedValue(undefined),
+      };
+      vi.mocked(mockWriteBatch).mockReturnValue(batchMock as any);
+      vi.mocked(updateDoc).mockResolvedValue(undefined);
+
+      await service.updateBracketMatchScore('t1', 'r2-m1', validSets);
+
+      // updateDoc should be called to mark tournament as completed
+      expect(updateDoc).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          status: 'Terminé',
+          champion: participantA.id,
+        })
+      );
+    });
+
+    it('handles forfeit correctly — winner is the non-forfeiting participant', async () => {
+      const { getDoc, writeBatch: mockWriteBatch } = await import('@angular/fire/firestore');
+
+      vi.mocked(getDoc).mockResolvedValueOnce({
+        exists: () => true,
+        id: 'r1-m1',
+        data: () => ({ ...pendingMatch }),
+      } as any);
+
+      vi.mocked(getDoc).mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ rounds: 2, bracketSize: 4 }),
+      } as any);
+
+      vi.mocked(getDoc).mockResolvedValueOnce({
+        exists: () => true,
+        id: 'r2-m1',
+        data: () => ({ round: 2, position: 1, participantA: null, participantB: null, status: 'pending' }),
+      } as any);
+
+      const batchMock = {
+        delete: vi.fn(),
+        set: vi.fn(),
+        update: vi.fn(),
+        commit: vi.fn().mockResolvedValue(undefined),
+      };
+      vi.mocked(mockWriteBatch).mockReturnValue(batchMock as any);
+
+      // participantA forfeits → participantB wins
+      await service.updateBracketMatchScore('t1', 'r1-m1', [], participantA.id);
+
+      const firstCallArgs = batchMock.update.mock.calls[0];
+      expect(firstCallArgs[1]).toMatchObject({
+        winnerId: participantB.id,
+        forfeitParticipantId: participantA.id,
+        status: 'played',
+      });
+    });
   });
 });
