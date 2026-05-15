@@ -54,14 +54,14 @@
                                           "issue-16"
                                       ],
                          "issue-18":  [
-                                          "issue-16"
+                                          "issue-17"
                                       ],
                          "issue-19":  [
-                                          "issue-16"
+                                          "issue-17"
                                       ],
                          "issue-20":  [
                                           "issue-19",
-                                          "issue-16"
+                                          "issue-17"
                                       ]
                      }
 }
