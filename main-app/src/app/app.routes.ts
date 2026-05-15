@@ -125,6 +125,14 @@ export const routes: Routes = [
       ),
   },
   {
+    // Player: consult pool standings and results (US-016)
+    path: 'player/:playerId/tournaments/:tournamentId/pools/:poolId',
+    loadComponent: () =>
+      import('./features/players/tournaments/pool-standings.component').then(
+        (m) => m.PoolStandingsComponent
+      ),
+  },
+  {
     path: '',
     redirectTo: 'admin',
     pathMatch: 'full',
