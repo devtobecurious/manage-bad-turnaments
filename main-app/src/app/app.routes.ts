@@ -94,6 +94,14 @@ export const routes: Routes = [
             (m) => m.PoolDrawComponent
           ),
       },
+      {
+        // Admin: match schedule per pool (US-013)
+        path: 'tournaments/:tournamentId/pools/:poolId/matches',
+        loadComponent: () =>
+          import('./features/admin/tournaments/match-schedule.component').then(
+            (m) => m.MatchScheduleComponent
+          ),
+      },
     ],
   },
   {
