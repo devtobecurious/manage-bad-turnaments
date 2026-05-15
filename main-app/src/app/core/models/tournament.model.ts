@@ -35,4 +35,6 @@ export interface Tournament {
   poolConfig?: PoolConfig[];
   createdBy?: string;
   createdAt: string;
+  /** ID of the tournament champion (set when bracket final is played) */
+  champion?: string;
 }

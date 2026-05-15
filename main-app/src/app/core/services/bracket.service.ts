@@ -7,12 +7,14 @@ import {
   doc,
   setDoc,
   writeBatch,
+  getDoc,
+  updateDoc,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { BracketMatch, BracketParticipant } from '../models/bracket.model';
 import { PoolStanding } from '../models/standings.model';
 import { Pool } from '../models/pool.model';
-import { Match } from '../models/match.model';
+import { Match, SetScore, validateMatch, determineMatchWinner } from '../models/match.model';
 import { PoolConfig } from '../models/tournament.model';
 
 // ============================================================
@@ -292,6 +294,54 @@ export function generateSubsequentRounds(bracketSize: number): BracketMatch[] {
   return matches;
 }
 
+/**
+ * Propagates bye winners into subsequent rounds.
+ * Modifies matches in place.
+ * Should be called after all R1 matches are built (including byes).
+ */
+export function propagateByes(matches: BracketMatch[]): void {
+  // Sort matches so we process earlier rounds first
+  const sorted = [...matches].sort((a, b) => a.round - b.round || a.position - b.position);
+
+  // Build a map for quick lookup: round+position → match
+  const matchMap = new Map<string, BracketMatch>();
+  for (const m of matches) {
+    matchMap.set(`r${m.round}-m${m.position}`, m);
+  }
+
+  for (const match of sorted) {
+    if (match.status !== 'bye' || !match.winnerId) continue;
+
+    // Find winner participant info
+    const winner = match.participantA?.id === match.winnerId
+      ? match.participantA
+      : match.participantB;
+
+    if (!winner) continue;
+
+    // Calculate next round slot
+    const nextRound = match.round + 1;
+    const nextPosition = Math.ceil(match.position / 2);
+    const nextMatch = matchMap.get(`r${nextRound}-m${nextPosition}`);
+
+    if (!nextMatch) continue;
+
+    // If P is odd → fills participantA slot; if P is even → fills participantB slot
+    if (match.position % 2 === 1) {
+      nextMatch.participantA = { id: winner.id, name: winner.name, fromPool: winner.fromPool };
+    } else {
+      nextMatch.participantB = { id: winner.id, name: winner.name, fromPool: winner.fromPool };
+    }
+
+    // If the next match now has both participants as byes-winners, it becomes a bye too
+    if (nextMatch.participantA && nextMatch.participantB) {
+      // Leave as pending — two real participants (possibly one was bye-advanced)
+    } else if (nextMatch.participantA || nextMatch.participantB) {
+      // One slot still empty — stays pending waiting for the sibling match
+    }
+  }
+}
+
 // ============================================================
 // BracketService
 // ============================================================
@@ -407,7 +457,9 @@ export class BracketService {
     // Generate empty subsequent round matches
     const laterMatches = generateSubsequentRounds(bracketSize);
 
+    // Propagate byes: fill winners of bye matches into subsequent rounds
     const allMatches = [...r1Matches, ...laterMatches];
+    propagateByes(allMatches);
 
     // Write to Firestore
     // 1. Delete existing bracket matches
@@ -443,5 +495,114 @@ export class BracketService {
     return collectionData(this.bracketMatchesRef(tournamentId), {
       idField: 'id',
     }) as Observable<BracketMatch[]>;
+  }
+
+  /**
+   * Updates the score of a bracket match.
+   * - Validates scores against badminton rules.
+   * - Determines the winner.
+   * - Writes match result to Firestore (scores field, same format as bracket.model).
+   * - Propagates the winner to the next round match at position ceil(P/2),
+   *   participant slot A if position is odd, B if even.
+   * - If this is the final match (round === bracket.rounds), marks the tournament
+   *   as completed and sets tournament.champion.
+   *
+   * @param tournamentId - Tournament ID
+   * @param matchId - Bracket match document ID (e.g. 'r1-m3')
+   * @param sets - Array of set scores (best of 3, badminton rules)
+   * @param forfeit - Optional: ID of the forfeiting participant
+   */
+  async updateBracketMatchScore(
+    tournamentId: string,
+    matchId: string,
+    sets: SetScore[],
+    forfeit?: string
+  ): Promise<void> {
+    // Load the bracket match
+    const matchRef = doc(this.bracketMatchesRef(tournamentId), matchId);
+    const matchSnap = await getDoc(matchRef);
+    if (!matchSnap.exists()) {
+      throw new Error(`Match de bracket ${matchId} introuvable.`);
+    }
+    const match = { id: matchSnap.id, ...matchSnap.data() } as BracketMatch;
+
+    if (!match.participantA || !match.participantB) {
+      throw new Error('Ce match ne peut pas être joué : un ou les deux participants manquent.');
+    }
+
+    // Validate scores
+    const validation = validateMatch(sets, forfeit);
+    if (!validation.valid) {
+      throw new Error(validation.error ?? 'Score invalide.');
+    }
+
+    // Determine winner
+    const winnerId = determineMatchWinner(
+      sets,
+      match.participantA.id,
+      match.participantB.id,
+      forfeit
+    );
+    if (!winnerId) {
+      throw new Error('Impossible de déterminer le gagnant.');
+    }
+
+    // Build update for this match
+    const matchUpdate: Partial<BracketMatch> & Record<string, unknown> = {
+      status: 'played',
+      scores: forfeit ? [] : sets.map((s) => ({ a: s.a, b: s.b })),
+      winnerId,
+    };
+    if (forfeit) {
+      matchUpdate['forfeitParticipantId'] = forfeit;
+    }
+
+    // Load bracket metadata to know total rounds
+    const bracketSnap = await getDoc(this.bracketDocRef(tournamentId));
+    const bracketMeta = bracketSnap.exists()
+      ? (bracketSnap.data() as { rounds: number; bracketSize: number })
+      : null;
+    const totalRounds = bracketMeta?.rounds ?? 0;
+
+    // Determine winner participant info for propagation
+    const winnerParticipant =
+      match.participantA.id === winnerId ? match.participantA : match.participantB;
+
+    // Propagate winner to next round (if not final)
+    const isLastRound = totalRounds > 0 && match.round === totalRounds;
+
+    const batch = writeBatch(this.firestore);
+
+    // Update this match
+    batch.update(matchRef, matchUpdate);
+
+    if (!isLastRound) {
+      const nextRound = match.round + 1;
+      const nextPosition = Math.ceil(match.position / 2);
+      const nextMatchRef = doc(
+        this.bracketMatchesRef(tournamentId),
+        `r${nextRound}-m${nextPosition}`
+      );
+      const nextMatchSnap = await getDoc(nextMatchRef);
+      if (nextMatchSnap.exists()) {
+        // Position odd → slot A, position even → slot B
+        if (match.position % 2 === 1) {
+          batch.update(nextMatchRef, { participantA: winnerParticipant });
+        } else {
+          batch.update(nextMatchRef, { participantB: winnerParticipant });
+        }
+      }
+    }
+
+    await batch.commit();
+
+    // If final match played, mark tournament as completed + set champion
+    if (isLastRound) {
+      const tournamentRef = doc(this.firestore, 'tournaments', tournamentId);
+      await updateDoc(tournamentRef, {
+        status: 'Terminé',
+        champion: winnerId,
+      });
+    }
   }
 }
