@@ -4,7 +4,13 @@ import { of } from 'rxjs';
 import { MatchService } from './match.service';
 import { PoolService } from './pool.service';
 import { PlayerService } from './player.service';
-import { generateRoundRobinPairs } from '../models/match.model';
+import {
+  generateRoundRobinPairs,
+  validateSet,
+  determineSetWinner,
+  validateMatch,
+  determineMatchWinner,
+} from '../models/match.model';
 
 // ========================
 // Pure function tests
@@ -61,6 +67,160 @@ describe('generateRoundRobinPairs', () => {
 });
 
 // ========================
+// validateSet — pure function tests
+// ========================
+
+describe('validateSet', () => {
+  // Valid cases
+  it('validateSet(21, 19) → valide', () => {
+    expect(validateSet(21, 19)).toBe(true);
+  });
+
+  it('validateSet(21, 0) → valide (normal win by 21 or more lead)', () => {
+    expect(validateSet(21, 0)).toBe(true);
+  });
+
+  it('validateSet(22, 20) → valide (2 pts d\'écart)', () => {
+    expect(validateSet(22, 20)).toBe(true);
+  });
+
+  it('validateSet(29, 27) → valide (2 pts d\'écart, below 30)', () => {
+    expect(validateSet(29, 27)).toBe(true);
+  });
+
+  it('validateSet(30, 29) → valide (exception max score)', () => {
+    expect(validateSet(30, 29)).toBe(true);
+  });
+
+  // Invalid cases
+  it('validateSet(21, 20) → invalide (pas 2 pts d\'écart)', () => {
+    expect(validateSet(21, 20)).toBe(false);
+  });
+
+  it('validateSet(30, 28) → invalide (30 n\'est atteint que par 30-29)', () => {
+    expect(validateSet(30, 28)).toBe(false);
+  });
+
+  it('validateSet(20, 18) → invalide (score gagnant < 21)', () => {
+    expect(validateSet(20, 18)).toBe(false);
+  });
+
+  it('validateSet(30, 30) → invalide (égalité)', () => {
+    expect(validateSet(30, 30)).toBe(false);
+  });
+
+  it('validateSet(31, 29) → invalide (score > 30)', () => {
+    expect(validateSet(31, 29)).toBe(false);
+  });
+
+  it('validateSet(-1, 21) → invalide (score négatif)', () => {
+    expect(validateSet(-1, 21)).toBe(false);
+  });
+});
+
+// ========================
+// determineSetWinner — pure function tests
+// ========================
+
+describe('determineSetWinner', () => {
+  it('returns A when A wins 21-19', () => {
+    expect(determineSetWinner(21, 19)).toBe('A');
+  });
+
+  it('returns B when B wins 19-21', () => {
+    expect(determineSetWinner(19, 21)).toBe('B');
+  });
+
+  it('returns null for invalid set 21-20', () => {
+    expect(determineSetWinner(21, 20)).toBeNull();
+  });
+});
+
+// ========================
+// validateMatch — pure function tests
+// ========================
+
+describe('validateMatch', () => {
+  it('valide : 2-0 (21-19, 21-15)', () => {
+    const result = validateMatch([{ a: 21, b: 19 }, { a: 21, b: 15 }]);
+    expect(result.valid).toBe(true);
+  });
+
+  it('valide : 2-1 (21-19, 18-21, 21-19)', () => {
+    const result = validateMatch([{ a: 21, b: 19 }, { a: 18, b: 21 }, { a: 21, b: 19 }]);
+    expect(result.valid).toBe(true);
+  });
+
+  it('valide : forfait', () => {
+    const result = validateMatch([], 'pA');
+    expect(result.valid).toBe(true);
+  });
+
+  it('invalide : match non terminé (1-1 sans 3e set)', () => {
+    const result = validateMatch([{ a: 21, b: 19 }, { a: 18, b: 21 }]);
+    expect(result.valid).toBe(false);
+  });
+
+  it('invalide : plus de 3 sets', () => {
+    const result = validateMatch([
+      { a: 21, b: 19 }, { a: 18, b: 21 }, { a: 21, b: 15 }, { a: 21, b: 15 }
+    ]);
+    expect(result.valid).toBe(false);
+  });
+
+  it('invalide : set invalide dans la liste', () => {
+    const result = validateMatch([{ a: 21, b: 20 }]);
+    expect(result.valid).toBe(false);
+  });
+
+  it('invalide : sets joués après fin du match', () => {
+    // 2-0 + extra set = invalid
+    const result = validateMatch([{ a: 21, b: 19 }, { a: 21, b: 15 }, { a: 21, b: 10 }]);
+    expect(result.valid).toBe(false);
+  });
+
+  it('invalide : aucun set saisi', () => {
+    const result = validateMatch([]);
+    expect(result.valid).toBe(false);
+  });
+});
+
+// ========================
+// determineMatchWinner — pure function tests
+// ========================
+
+describe('determineMatchWinner', () => {
+  const pA = 'playerA';
+  const pB = 'playerB';
+
+  it('A gagne 2-0', () => {
+    expect(determineMatchWinner([{ a: 21, b: 19 }, { a: 21, b: 15 }], pA, pB)).toBe(pA);
+  });
+
+  it('B gagne 2-0', () => {
+    expect(determineMatchWinner([{ a: 19, b: 21 }, { a: 15, b: 21 }], pA, pB)).toBe(pB);
+  });
+
+  it('A gagne 2-1', () => {
+    expect(determineMatchWinner(
+      [{ a: 21, b: 19 }, { a: 18, b: 21 }, { a: 21, b: 19 }], pA, pB
+    )).toBe(pA);
+  });
+
+  it('forfait A → B gagne', () => {
+    expect(determineMatchWinner([], pA, pB, pA)).toBe(pB);
+  });
+
+  it('forfait B → A gagne', () => {
+    expect(determineMatchWinner([], pA, pB, pB)).toBe(pA);
+  });
+
+  it('retourne null si match invalide', () => {
+    expect(determineMatchWinner([{ a: 21, b: 20 }], pA, pB)).toBeNull();
+  });
+});
+
+// ========================
 // MatchService tests
 // ========================
 
@@ -78,6 +238,8 @@ vi.mock('@angular/fire/firestore', () => {
     addDoc: vi.fn().mockResolvedValue({ id: 'match-id-1' }),
     getDocs: vi.fn().mockResolvedValue({ docs: [] }),
     writeBatch: vi.fn().mockImplementation(() => batchObj),
+    doc: vi.fn().mockReturnValue({ path: 'matches/match-1' }),
+    updateDoc: vi.fn().mockResolvedValue(undefined),
   };
 });
 
@@ -315,6 +477,113 @@ describe('MatchService', () => {
         expect.objectContaining({
           participantA: { id: 'p1', name: 'Martin Alice' },
           participantB: { id: 'p2', name: 'Dupont Bob' },
+        })
+      );
+    });
+  });
+
+  describe('updateMatchScore()', () => {
+    const tournamentId = 't1';
+    const poolId = 'pool1';
+    const matchId = 'match-1';
+
+    const matchDoc = {
+      id: matchId,
+      data: () => ({
+        tournamentId,
+        poolId,
+        gameType: 'simple-homme',
+        participantA: { id: 'pA', name: 'Alice Martin' },
+        participantB: { id: 'pB', name: 'Bob Dupont' },
+        status: 'pending',
+      }),
+    };
+
+    it('should throw if match is not found', async () => {
+      const { getDocs } = await import('@angular/fire/firestore');
+      vi.mocked(getDocs).mockResolvedValueOnce({ docs: [] } as any);
+
+      await expect(
+        service.updateMatchScore(tournamentId, poolId, 'unknown-match', [{ a: 21, b: 19 }, { a: 21, b: 15 }])
+      ).rejects.toThrow('Match unknown-match not found');
+    });
+
+    it('should throw if sets are invalid', async () => {
+      const { getDocs } = await import('@angular/fire/firestore');
+      vi.mocked(getDocs).mockResolvedValueOnce({ docs: [matchDoc] } as any);
+
+      await expect(
+        service.updateMatchScore(tournamentId, poolId, matchId, [{ a: 21, b: 20 }])
+      ).rejects.toThrow();
+    });
+
+    it('should call updateDoc with status played, sets, and winnerId', async () => {
+      const { getDocs, updateDoc } = await import('@angular/fire/firestore');
+      vi.mocked(getDocs).mockResolvedValueOnce({ docs: [matchDoc] } as any);
+      vi.mocked(updateDoc).mockResolvedValue(undefined);
+
+      await service.updateMatchScore(tournamentId, poolId, matchId, [
+        { a: 21, b: 19 },
+        { a: 21, b: 15 },
+      ]);
+
+      expect(updateDoc).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          status: 'played',
+          winnerId: 'pA',
+          sets: [{ a: 21, b: 19 }, { a: 21, b: 15 }],
+        })
+      );
+    });
+
+    it('should handle forfeit: B wins when A forfeits', async () => {
+      const { getDocs, updateDoc } = await import('@angular/fire/firestore');
+      vi.mocked(getDocs).mockResolvedValueOnce({ docs: [matchDoc] } as any);
+      vi.mocked(updateDoc).mockResolvedValue(undefined);
+
+      await service.updateMatchScore(tournamentId, poolId, matchId, [], 'pA');
+
+      expect(updateDoc).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          status: 'played',
+          winnerId: 'pB',
+          forfeitParticipantId: 'pA',
+        })
+      );
+    });
+
+    it('should handle correction: updating an already played match', async () => {
+      const playedMatchDoc = {
+        id: matchId,
+        data: () => ({
+          tournamentId,
+          poolId,
+          gameType: 'simple-homme',
+          participantA: { id: 'pA', name: 'Alice Martin' },
+          participantB: { id: 'pB', name: 'Bob Dupont' },
+          status: 'played',
+          sets: [{ a: 21, b: 19 }, { a: 21, b: 15 }],
+          winnerId: 'pA',
+        }),
+      };
+
+      const { getDocs, updateDoc } = await import('@angular/fire/firestore');
+      vi.mocked(getDocs).mockResolvedValueOnce({ docs: [playedMatchDoc] } as any);
+      vi.mocked(updateDoc).mockResolvedValue(undefined);
+
+      // Correction: B actually won
+      await service.updateMatchScore(tournamentId, poolId, matchId, [
+        { a: 19, b: 21 },
+        { a: 15, b: 21 },
+      ]);
+
+      expect(updateDoc).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          status: 'played',
+          winnerId: 'pB',
         })
       );
     });
