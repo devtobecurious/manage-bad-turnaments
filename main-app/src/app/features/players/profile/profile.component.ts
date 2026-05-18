@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { PlayerService } from '../../../core/services/player.service';
 import { StatsService } from '../../../core/services/stats.service';
@@ -10,7 +10,14 @@ import { GAME_TYPE_LABELS } from '../../../core/models/registration.model';
 @Component({
   selector: 'app-player-profile',
   standalone: true,
+  imports: [RouterLink],
   template: `
+    <header class="bg-white shadow-sm mb-6">
+      <div class="max-w-2xl mx-auto px-4 py-3 flex justify-between items-center">
+        <span class="font-bold text-gray-900">BadTournoi</span>
+        <a [routerLink]="['/player', playerId, 'tournaments']" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Mes tournois</a>
+      </div>
+    </header>
     <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl">
         @if (loading()) {
@@ -120,6 +127,8 @@ export class PlayerProfileComponent implements OnInit, OnDestroy {
   private readonly playerService = inject(PlayerService);
   private readonly statsService = inject(StatsService);
 
+  playerId = '';
+
   readonly loading = signal(true);
   readonly player = signal<Player | null>(null);
   readonly personalLink = signal('');
@@ -129,6 +138,7 @@ export class PlayerProfileComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('id') ?? '';
+    this.playerId = id;
 
     if (!id) {
       this.loading.set(false);

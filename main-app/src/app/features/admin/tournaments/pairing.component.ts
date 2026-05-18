@@ -3,11 +3,11 @@ import {
   inject,
   signal,
   computed,
-  input,
   OnInit,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { PairingService } from '../../../core/services/pairing.service';
 import { RegistrationService } from '../../../core/services/registration.service';
 import { PlayerService } from '../../../core/services/player.service';
@@ -206,7 +206,8 @@ interface PairWithIndex extends Pair {
   `,
 })
 export class PairingComponent implements OnInit {
-  readonly tournamentId = input.required<string>();
+  private readonly route = inject(ActivatedRoute);
+  readonly tournamentId = this.route.snapshot.paramMap.get('id')!;
 
   private readonly pairingService = inject(PairingService);
   private readonly registrationService = inject(RegistrationService);
@@ -274,7 +275,7 @@ export class PairingComponent implements OnInit {
 
   ngOnInit(): void {
     for (const gameType of DOUBLE_GAME_TYPES) {
-      this.registrationService.getRegistrations(this.tournamentId(), gameType).subscribe((regs) => {
+      this.registrationService.getRegistrations(this.tournamentId, gameType).subscribe((regs) => {
         this.registrationPlayerIds.update((current) => ({
           ...current,
           [gameType]: regs.map((r) => r.playerId),
@@ -292,7 +293,7 @@ export class PairingComponent implements OnInit {
 
   private loadPairsForCurrentTab(): void {
     const tab = this.activeTab();
-    this.pairingService.getPairs(this.tournamentId(), tab).subscribe((pairs) => {
+    this.pairingService.getPairs(this.tournamentId, tab).subscribe((pairs) => {
       this.savedPairs.set(pairs);
     });
   }
@@ -319,7 +320,7 @@ export class PairingComponent implements OnInit {
     this.oddCountError.set(null);
 
     try {
-      const pairs = this.pairingService.generatePairs(this.tournamentId(), tab, playerIds);
+      const pairs = this.pairingService.generatePairs(this.tournamentId, tab, playerIds);
       this.inMemoryPairs.set(pairs);
       this.editingPairIndex.set(-1);
     } catch (err) {
@@ -334,7 +335,7 @@ export class PairingComponent implements OnInit {
 
     try {
       const pairs = this.inMemoryPairs();
-      await this.pairingService.savePairs(this.tournamentId(), this.activeTab(), pairs);
+      await this.pairingService.savePairs(this.tournamentId, this.activeTab(), pairs);
       this.inMemoryPairs.set([]);
     } catch {
       this.generalError.set('Impossible d\'enregistrer les paires. Veuillez réessayer.');
@@ -351,13 +352,13 @@ export class PairingComponent implements OnInit {
       // Save in-memory pairs first if any
       if (this.inMemoryPairs().length > 0) {
         await this.pairingService.savePairs(
-          this.tournamentId(),
+          this.tournamentId,
           this.activeTab(),
           this.inMemoryPairs()
         );
         this.inMemoryPairs.set([]);
       }
-      await this.pairingService.lockPairs(this.tournamentId(), this.activeTab());
+      await this.pairingService.lockPairs(this.tournamentId, this.activeTab());
     } catch {
       this.generalError.set('Impossible de valider les paires. Veuillez réessayer.');
     } finally {
@@ -395,7 +396,7 @@ export class PairingComponent implements OnInit {
       // Persisted pair — update via service
       try {
         await this.pairingService.updatePair(
-          this.tournamentId(),
+          this.tournamentId,
           pair.id,
           p1,
           p2,

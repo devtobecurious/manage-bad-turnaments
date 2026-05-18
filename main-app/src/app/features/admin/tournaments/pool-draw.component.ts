@@ -1,6 +1,6 @@
-import { Component, inject, signal, computed, input, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { TournamentService } from '../../../core/services/tournament.service';
 import { RegistrationService } from '../../../core/services/registration.service';
 import { PoolService } from '../../../core/services/pool.service';
@@ -29,7 +29,7 @@ import { Tournament } from '../../../core/models/tournament.model';
           }
         </div>
         <a
-          [routerLink]="['/admin/tournaments', tournamentId(), 'registrations']"
+          [routerLink]="['/admin/tournaments', tournamentId, 'registrations']"
           class="text-sm text-indigo-600 hover:text-indigo-800"
         >
           Retour aux inscrits
@@ -170,7 +170,8 @@ import { Tournament } from '../../../core/models/tournament.model';
   `,
 })
 export class PoolDrawComponent implements OnInit {
-  readonly tournamentId = input.required<string>();
+  private readonly route = inject(ActivatedRoute);
+  readonly tournamentId = this.route.snapshot.paramMap.get('id')!;
 
   private readonly tournamentService = inject(TournamentService);
   private readonly registrationService = inject(RegistrationService);
@@ -223,14 +224,14 @@ export class PoolDrawComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     try {
-      const t = await this.tournamentService.getTournament(this.tournamentId());
+      const t = await this.tournamentService.getTournament(this.tournamentId);
       this.tournament.set(t);
 
       if (t && t.gameTypes && t.gameTypes.length > 0) {
         // Load registrations per game type
         for (const gameType of GAME_TYPES) {
           if (t.gameTypes.includes(gameType as any)) {
-            this.registrationService.getRegistrations(this.tournamentId(), gameType).subscribe(
+            this.registrationService.getRegistrations(this.tournamentId, gameType).subscribe(
               (regs) => {
                 this.participantsByType.update((current) => ({
                   ...current,
@@ -261,7 +262,7 @@ export class PoolDrawComponent implements OnInit {
 
     for (const config of tournament.poolConfig) {
       const gameType = config.gameType as GameType;
-      this.poolService.getPools(this.tournamentId(), gameType).subscribe((pools) => {
+      this.poolService.getPools(this.tournamentId, gameType).subscribe((pools) => {
         const anyLocked = pools.some((p) => p.locked);
         if (anyLocked) {
           this.lockedGameTypes.update((s) => {
@@ -284,7 +285,7 @@ export class PoolDrawComponent implements OnInit {
     this.currentPools.set([]);
 
     // Load existing pools for this tab if available
-    this.poolService.getPools(this.tournamentId(), gameType).subscribe((pools) => {
+    this.poolService.getPools(this.tournamentId, gameType).subscribe((pools) => {
       if (pools.length > 0) {
         this.currentPools.set(pools);
       }
@@ -312,7 +313,7 @@ export class PoolDrawComponent implements OnInit {
 
     try {
       const generatedPools = this.poolService.generatePools(
-        this.tournamentId(),
+        this.tournamentId,
         tab,
         poolCount,
         participants
@@ -337,7 +338,7 @@ export class PoolDrawComponent implements OnInit {
     this.drawError.set(null);
 
     try {
-      await this.poolService.lockPools(this.tournamentId(), tab);
+      await this.poolService.lockPools(this.tournamentId, tab);
 
       this.lockedGameTypes.update((s) => {
         const next = new Set(s);
@@ -346,7 +347,7 @@ export class PoolDrawComponent implements OnInit {
       });
 
       // Reload tournament to check if status changed
-      const updated = await this.tournamentService.getTournament(this.tournamentId());
+      const updated = await this.tournamentService.getTournament(this.tournamentId);
       if (updated) {
         this.tournament.set(updated);
       }

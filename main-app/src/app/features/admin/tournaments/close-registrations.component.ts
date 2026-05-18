@@ -1,4 +1,5 @@
-import { Component, inject, signal, input, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { TournamentService } from '../../../core/services/tournament.service';
 import { TournamentStatus } from '../../../core/models/tournament.model';
 
@@ -74,9 +75,9 @@ import { TournamentStatus } from '../../../core/models/tournament.model';
     </div>
   `,
 })
-export class CloseRegistrationsComponent {
-  readonly tournamentId = input.required<string>();
-  readonly currentStatus = input.required<TournamentStatus>();
+export class CloseRegistrationsComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  readonly tournamentId = this.route.snapshot.paramMap.get('id')!;
 
   private readonly tournamentService = inject(TournamentService);
 
@@ -84,8 +85,16 @@ export class CloseRegistrationsComponent {
   readonly showConfirm = signal(false);
   readonly closed = signal(false);
   readonly error = signal<string | null>(null);
+  readonly currentStatus = signal<TournamentStatus | null>(null);
 
   readonly canClose = computed(() => this.currentStatus() === 'Inscriptions ouvertes');
+
+  async ngOnInit(): Promise<void> {
+    const t = await this.tournamentService.getTournament(this.tournamentId);
+    if (t) {
+      this.currentStatus.set(t.status);
+    }
+  }
 
   requestConfirm(): void {
     this.showConfirm.set(true);
@@ -101,7 +110,7 @@ export class CloseRegistrationsComponent {
     this.error.set(null);
 
     try {
-      await this.tournamentService.closeRegistrations(this.tournamentId());
+      await this.tournamentService.closeRegistrations(this.tournamentId);
       this.showConfirm.set(false);
       this.closed.set(true);
     } catch {

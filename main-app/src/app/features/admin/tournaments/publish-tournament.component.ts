@@ -1,4 +1,5 @@
-import { Component, inject, signal, input } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { TournamentService } from '../../../core/services/tournament.service';
 
 @Component({
@@ -71,7 +72,8 @@ import { TournamentService } from '../../../core/services/tournament.service';
   `,
 })
 export class PublishTournamentComponent {
-  readonly tournamentId = input.required<string>();
+  private readonly route = inject(ActivatedRoute);
+  readonly tournamentId = this.route.snapshot.paramMap.get('id')!;
 
   private readonly tournamentService = inject(TournamentService);
 
@@ -94,7 +96,7 @@ export class PublishTournamentComponent {
     this.error.set(null);
 
     try {
-      const token = await this.tournamentService.publishTournament(this.tournamentId());
+      const token = await this.tournamentService.publishTournament(this.tournamentId);
       const origin = window.location.origin;
       this.participationLink.set(`${origin}/tournament/${token}/register`);
       this.showConfirm.set(false);

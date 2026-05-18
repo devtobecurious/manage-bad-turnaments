@@ -22,6 +22,9 @@
 | B2 | `bracket.component.ts` | Erreur TypeScript `toSignal` incompatible avec Angular 22 (`initialValue: []`) | ✅ CORRIGÉ |
 | B3 | `register.component.ts` | Race condition : formulaire affiché avant fin de validation du token (pas de spinner de chargement pendant la vérification) | ✅ CORRIGÉ |
 | B4 | `register.component.ts` | `onSubmit()` ne vérifie pas `inviteInvalid()` avant d'appeler `registerPlayer()` | ✅ CORRIGÉ |
+| B5 | `pool-config.component.ts` et 5 autres composants admin | `input.required<string>()` utilisé sur des composants routés → page blanche. Corrigé en passant à `ActivatedRoute`. Fichiers touchés : pool-config, publish-tournament, registrations, close-registrations, pairing, pool-draw | ✅ CORRIGÉ |
+| B6 | `admin.component.ts` | Menu admin sans liens vers les tournois (liste/créer) | ✅ CORRIGÉ |
+| B7 | Pages player | Aucun header de navigation sur les pages joueur | ✅ CORRIGÉ |
 
 ---
 
@@ -61,8 +64,10 @@
 
 | Étape | Action | Résultat attendu | Statut | Remarques |
 |-------|--------|-----------------|--------|-----------|
-| 1 | Aller sur `/admin/tournaments/new` | Formulaire création visible | ⬜ À TESTER | Nécessite auth admin |
+| 0 | Aller sur `/admin/tournaments` | Liste des tournois visible avec bouton "Créer un tournoi" | ⬜ À TESTER | Nécessite auth admin |
+| 1 | Cliquer "Créer un tournoi" → aller sur `/admin/tournaments/new` | Formulaire création visible | ⬜ À TESTER | |
 | 2 | Remplir et soumettre | Tournoi créé, statut "Brouillon" | ⬜ À TESTER | |
+| 0bis | Retourner sur `/admin/tournaments` | Tournoi apparaît dans la liste avec badge "Brouillon" et liens contextuels | ⬜ À TESTER | |
 | 3 | Configurer les poules `/admin/tournaments/:id/pool-config` | Config sauvegardée | ⬜ À TESTER | |
 | 4 | Publier `/admin/tournaments/:id/publish` | Statut → "Inscriptions ouvertes" | ⬜ À TESTER | |
 
@@ -161,6 +166,36 @@
 
 ---
 
+## PC-11 — Navigation admin : liste des tournois
+
+| Étape | Action | Résultat attendu | Statut | Remarques |
+|-------|--------|-----------------|--------|-----------|
+| 1 | Aller sur `/admin/tournaments` | Liste des tournois affichée | ⬜ À TESTER | Nécessite auth admin |
+| 2 | Vérifier les badges de statut | Brouillon / Inscriptions ouvertes / Inscriptions clôturées / En cours / Terminé — couleurs distinctes selon statut | ⬜ À TESTER | |
+| 3 | Tournoi en statut "Brouillon" | Liens contextuels : Configurer poules, Publier | ⬜ À TESTER | |
+| 4 | Tournoi en statut "Inscriptions ouvertes" | Liens contextuels : Gérer inscriptions, Clôturer | ⬜ À TESTER | |
+| 5 | Tournoi en statut "Inscriptions clôturées" | Liens contextuels : Former paires, Tirer les poules | ⬜ À TESTER | |
+| 6 | Bouton "Créer un tournoi" visible | Lien vers `/admin/tournaments/new` fonctionnel | ⬜ À TESTER | |
+
+**Statut global PC-11 :** ⬜ À TESTER (nécessite auth admin)
+
+---
+
+## PC-12 — Navigation joueur (headers)
+
+| Étape | Action | Résultat attendu | Statut | Remarques |
+|-------|--------|-----------------|--------|-----------|
+| 1 | Aller sur `/player/:id` | Header "BadTournoi" visible avec lien "Mes tournois" | ⬜ À TESTER | Nécessite un vrai ID joueur |
+| 2 | Cliquer "Mes tournois" depuis `/player/:id` | Navigation vers `/player/:id/tournaments` | ⬜ À TESTER | |
+| 3 | Aller sur `/player/:id/tournaments` | Header visible avec lien "Mon profil" | ⬜ À TESTER | |
+| 4 | Cliquer "Mon profil" depuis `/player/:id/tournaments` | Navigation vers `/player/:id` | ⬜ À TESTER | |
+| 5 | Aller sur `/player/:playerId/tournaments/:tournamentId/pools/:poolId` | Header visible avec lien "Mes tournois" | ⬜ À TESTER | |
+| 6 | Aller sur `/player/:playerId/tournaments/:tournamentId/bracket` | Header visible avec lien "Mes tournois" | ⬜ À TESTER | |
+
+**Statut global PC-12 :** ⬜ À TESTER (nécessite données réelles)
+
+---
+
 ## Récapitulatif
 
 | Parcours | Description | Statut auto | Statut manuel |
@@ -175,6 +210,8 @@
 | PC-08 | Génération et progression bracket | — | ⬜ |
 | PC-09 | Consultation bracket (joueur) | ✅ Erreur OK | ⬜ Données réelles |
 | PC-10 | Statistiques personnelles joueur | ✅ Route OK | ⬜ Données réelles |
+| PC-11 | Navigation admin : liste des tournois | — | ⬜ |
+| PC-12 | Navigation joueur (headers) | — | ⬜ |
 
 ---
 
@@ -186,7 +223,10 @@
 | B2 | 🔴 | `bracket.component.ts` | `toSignal` incompatible Angular 22 | ✅ CORRIGÉ |
 | B3 | 🟡 | `register.component.ts` | Race condition token : spinner ajouté, formulaire bloqué pendant vérification | ✅ CORRIGÉ |
 | B4 | 🔴 | `register.component.ts` | `onSubmit()` n'empêchait pas l'écriture avec un token invalide | ✅ CORRIGÉ |
+| B5 | 🔴 | `pool-config.component.ts` + 5 autres | `input.required<string>()` sur composants routés → page blanche ; corrigé via `ActivatedRoute` | ✅ CORRIGÉ |
+| B6 | 🟡 | `admin.component.ts` | Menu admin sans liens vers les tournois (liste/créer) | ✅ CORRIGÉ |
+| B7 | 🟡 | Pages player | Aucun header de navigation sur les pages joueur | ✅ CORRIGÉ |
 
 ---
 
-> **Note :** Les PC-03 à PC-08 et les étapes nécessitant une authentification Google réelle ne peuvent pas être testées automatiquement. Ils nécessitent une session admin active dans le navigateur.
+> **Note :** Les PC-03 à PC-08, PC-11 et les étapes nécessitant une authentification Google réelle ne peuvent pas être testées automatiquement. Ils nécessitent une session admin active dans le navigateur. PC-12 nécessite des données joueur réelles en Firestore.

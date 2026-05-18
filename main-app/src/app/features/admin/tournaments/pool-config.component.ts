@@ -1,5 +1,6 @@
-import { Component, inject, input, output, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { TournamentService } from '../../../core/services/tournament.service';
 import { PoolConfig, GameType } from '../../../core/models/tournament.model';
 
@@ -22,7 +23,7 @@ const GAME_TYPE_LABELS: Record<GameType, string> = {
         Définissez le nombre de poules et les qualifiés pour chaque type de jeu.
       </p>
 
-      @if (gameTypes().length === 0) {
+      @if (gameTypesData().length === 0) {
         <p class="text-gray-400 text-sm italic">Aucun type de jeu configuré pour ce tournoi.</p>
       }
 
@@ -70,7 +71,7 @@ const GAME_TYPE_LABELS: Record<GameType, string> = {
         </div>
       }
 
-      @if (gameTypes().length > 0) {
+      @if (gameTypesData().length > 0) {
         <div class="flex items-center gap-3 mt-4">
           <button
             (click)="save()"
@@ -97,10 +98,8 @@ const GAME_TYPE_LABELS: Record<GameType, string> = {
   `,
 })
 export class PoolConfigComponent implements OnInit {
-  readonly tournamentId = input.required<string>();
-  readonly gameTypes = input<GameType[]>([]);
-  readonly initialConfigs = input<PoolConfig[]>([]);
-  readonly saved = output<PoolConfig[]>();
+  private readonly route = inject(ActivatedRoute);
+  readonly tournamentId = this.route.snapshot.paramMap.get('id')!;
 
   private readonly tournamentService = inject(TournamentService);
 
@@ -109,15 +108,17 @@ export class PoolConfigComponent implements OnInit {
   readonly saveError = signal<string | null>(null);
 
   readonly configs = signal<PoolConfig[]>([]);
+  readonly gameTypesData = signal<GameType[]>([]);
 
-  ngOnInit(): void {
-    this.initConfigs();
+  async ngOnInit(): Promise<void> {
+    const t = await this.tournamentService.getTournament(this.tournamentId);
+    if (t) {
+      this.gameTypesData.set(t.gameTypes ?? []);
+      this.initConfigs(t.gameTypes ?? [], t.poolConfig ?? []);
+    }
   }
 
-  private initConfigs(): void {
-    const existing = this.initialConfigs();
-    const gameTypes = this.gameTypes();
-
+  private initConfigs(gameTypes: GameType[], existing: PoolConfig[]): void {
     const merged: PoolConfig[] = gameTypes.map((gameType) => {
       const found = existing.find((c) => c.gameType === gameType);
       return found ?? { gameType, poolCount: 1, qualifiersPerPool: 1 };
@@ -155,9 +156,8 @@ export class PoolConfigComponent implements OnInit {
 
     try {
       const configs = this.configs();
-      await this.tournamentService.updatePoolConfig(this.tournamentId(), configs);
+      await this.tournamentService.updatePoolConfig(this.tournamentId, configs);
       this.saveSuccess.set(true);
-      this.saved.emit(configs);
     } catch {
       this.saveError.set('Impossible de sauvegarder la configuration.');
     } finally {

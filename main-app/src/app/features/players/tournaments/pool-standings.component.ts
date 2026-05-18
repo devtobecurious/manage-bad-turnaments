@@ -7,6 +7,7 @@ import {
   OnInit,
   OnDestroy,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Subscription, combineLatest, firstValueFrom } from 'rxjs';
 import { StandingsService } from '../../../core/services/standings.service';
 import { MatchService } from '../../../core/services/match.service';
@@ -20,7 +21,14 @@ import { Tournament } from '../../../core/models/tournament.model';
 @Component({
   selector: 'app-pool-standings',
   standalone: true,
+  imports: [RouterLink],
   template: `
+    <header class="bg-white shadow-sm mb-6">
+      <div class="max-w-2xl mx-auto px-4 py-3 flex justify-between items-center">
+        <span class="font-bold text-gray-900">BadTournoi</span>
+        <a [routerLink]="['/player', playerId(), 'tournaments']" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Mes tournois</a>
+      </div>
+    </header>
     <div class="min-h-screen bg-gray-50 p-4">
       <div class="max-w-3xl mx-auto space-y-6">
 

@@ -1,6 +1,7 @@
-import { Component, inject, signal, computed, input, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { RegistrationService } from '../../../core/services/registration.service';
 import { PlayerService } from '../../../core/services/player.service';
 import {
@@ -129,7 +130,8 @@ import { Player } from '../../../core/models/player.model';
   `,
 })
 export class RegistrationsComponent implements OnInit {
-  readonly tournamentId = input.required<string>();
+  private readonly route = inject(ActivatedRoute);
+  readonly tournamentId = this.route.snapshot.paramMap.get('id')!;
 
   private readonly registrationService = inject(RegistrationService);
   private readonly playerService = inject(PlayerService);
@@ -172,7 +174,7 @@ export class RegistrationsComponent implements OnInit {
 
   ngOnInit(): void {
     for (const gameType of GAME_TYPES) {
-      this.registrationService.getRegistrations(this.tournamentId(), gameType).subscribe((regs) => {
+      this.registrationService.getRegistrations(this.tournamentId, gameType).subscribe((regs) => {
         this.allRegistrations.update((current) => ({
           ...current,
           [gameType]: regs,
@@ -218,7 +220,7 @@ export class RegistrationsComponent implements OnInit {
 
     try {
       await this.registrationService.addRegistration({
-        tournamentId: this.tournamentId(),
+        tournamentId: this.tournamentId,
         playerId: this.selectedPlayerId,
         gameType: this.activeTab(),
       });
@@ -234,7 +236,7 @@ export class RegistrationsComponent implements OnInit {
     this.removing.set(registrationId);
 
     try {
-      await this.registrationService.removeRegistration(this.tournamentId(), registrationId);
+      await this.registrationService.removeRegistration(this.tournamentId, registrationId);
     } catch {
       // ignore error silently — registration list will revert via observable
     } finally {

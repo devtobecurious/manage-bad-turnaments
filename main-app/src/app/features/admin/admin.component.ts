@@ -22,7 +22,7 @@ import { InviteService } from '../../core/services/invite.service';
             </button>
           </div>
         </div>
-        <nav class="max-w-6xl mx-auto px-8 pb-3 flex gap-4">
+        <nav class="max-w-6xl mx-auto px-8 pb-3 flex gap-4 items-center">
           <a
             routerLink="/admin/players"
             class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
@@ -34,6 +34,19 @@ import { InviteService } from '../../core/services/invite.service';
             class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
           >
             Ajouter un joueur
+          </a>
+          <span class="text-gray-300">|</span>
+          <a
+            routerLink="/admin/tournaments"
+            class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+          >
+            Tournois
+          </a>
+          <a
+            routerLink="/admin/tournaments/new"
+            class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+          >
+            Créer un tournoi
           </a>
         </nav>
       </header>

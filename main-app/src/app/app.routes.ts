@@ -39,6 +39,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'tournaments',
+        loadComponent: () =>
+          import('./features/admin/tournaments/tournaments-list.component').then(
+            (m) => m.TournamentsListComponent
+          ),
+      },
+      {
         // Admin: create a new tournament (US-005)
         path: 'tournaments/new',
         loadComponent: () =>

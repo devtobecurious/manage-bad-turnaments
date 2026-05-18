@@ -6,7 +6,7 @@ import {
   OnInit,
   OnDestroy,
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { PlayerService } from '../../../core/services/player.service';
 import { RegistrationService } from '../../../core/services/registration.service';
@@ -17,7 +17,14 @@ import { Registration, GameType, getCompatibleGameTypes, GAME_TYPE_LABELS } from
 @Component({
   selector: 'app-player-tournaments',
   standalone: true,
+  imports: [RouterLink],
   template: `
+    <header class="bg-white shadow-sm mb-6">
+      <div class="max-w-2xl mx-auto px-4 py-3 flex justify-between items-center">
+        <span class="font-bold text-gray-900">BadTournoi</span>
+        <a [routerLink]="['/player', playerId]" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Mon profil</a>
+      </div>
+    </header>
     <div class="min-h-screen bg-gray-50 p-4">
       <div class="max-w-2xl mx-auto">
 
@@ -121,6 +128,8 @@ export class PlayerTournamentsComponent implements OnInit, OnDestroy {
   private readonly playerService = inject(PlayerService);
   private readonly registrationService = inject(RegistrationService);
 
+  playerId = '';
+
   readonly loading = signal(true);
   readonly player = signal<Player | null>(null);
   readonly openTournaments = signal<Tournament[]>([]);
@@ -150,6 +159,7 @@ export class PlayerTournamentsComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('id') ?? '';
+    this.playerId = id;
 
     if (!id) {
       this.loading.set(false);
