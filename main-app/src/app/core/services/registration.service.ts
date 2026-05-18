@@ -3,7 +3,6 @@ import {
   Firestore,
   collection,
   collectionGroup,
-  collectionData,
   addDoc,
   doc,
   deleteDoc,
@@ -13,6 +12,7 @@ import {
   where,
   orderBy,
 } from '@angular/fire/firestore';
+import { firestoreStream } from '../utils/firestore-stream';
 import { Observable } from 'rxjs';
 import { Registration, GameType } from '../models/registration.model';
 import { Tournament } from '../models/tournament.model';
@@ -36,7 +36,7 @@ export class RegistrationService {
   getOpenTournaments(): Observable<Tournament[]> {
     const tournamentsRef = collection(this.firestore, 'tournaments');
     const q = query(tournamentsRef, where('status', '==', 'Inscriptions ouvertes'));
-    return collectionData(q, { idField: 'id' }) as Observable<Tournament[]>;
+    return firestoreStream(q, 'id') as Observable<Tournament[]>;
   }
 
   /**
@@ -55,7 +55,7 @@ export class RegistrationService {
       ? query(registrationsRef, where('gameType', '==', gameType), orderBy('registeredAt', 'asc'))
       : query(registrationsRef, orderBy('registeredAt', 'asc'));
 
-    return collectionData(q, { idField: 'id' }) as Observable<Registration[]>;
+    return firestoreStream(q, 'id') as Observable<Registration[]>;
   }
 
   /**
@@ -184,6 +184,6 @@ export class RegistrationService {
   getPlayerRegistrations(playerId: string): Observable<Registration[]> {
     const registrationsGroup = collectionGroup(this.firestore, 'registrations');
     const q = query(registrationsGroup, where('playerId', '==', playerId));
-    return collectionData(q, { idField: 'id' }) as Observable<Registration[]>;
+    return firestoreStream(q, 'id') as Observable<Registration[]>;
   }
 }

@@ -2,11 +2,11 @@ import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
-  collectionData,
   getDocs,
   query,
   where,
 } from '@angular/fire/firestore';
+import { firestoreStream } from '../utils/firestore-stream';
 import { Observable, forkJoin, from, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { Match } from '../models/match.model';
@@ -334,7 +334,7 @@ export class StatsService {
   getPlayerStats(playerId: string): Observable<PlayerStats> {
     // Load all tournaments first
     const tournamentsRef = collection(this.firestore, 'tournaments');
-    const tournaments$ = collectionData(tournamentsRef, { idField: 'id' }) as Observable<
+    const tournaments$ = firestoreStream(tournamentsRef, 'id') as Observable<
       Tournament[]
     >;
 

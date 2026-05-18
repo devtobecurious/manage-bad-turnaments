@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { of } from 'rxjs';
 import { PairingService } from './pairing.service';
 import { Pair } from '../models/pairing.model';
 
@@ -19,7 +18,6 @@ vi.mock('@angular/fire/firestore', () => {
   return {
     Firestore: class MockFirestore {},
     collection: vi.fn().mockReturnValue({ path: 'tournaments/t1/pairs' }),
-    collectionData: vi.fn(),
     addDoc: vi.fn().mockResolvedValue({ id: 'pair-id-1' }),
     deleteDoc: vi.fn().mockResolvedValue(undefined),
     doc: vi.fn().mockReturnValue({ path: 'tournaments/t1/pairs/p1' }),
@@ -28,6 +26,7 @@ vi.mock('@angular/fire/firestore', () => {
     where: vi.fn().mockReturnValue({}),
     updateDoc: vi.fn().mockResolvedValue(undefined),
     writeBatch: vi.fn().mockReturnValue(_mockBatch),
+    onSnapshot: vi.fn(),
     _mockBatch,
   };
 });
@@ -51,8 +50,12 @@ describe('PairingService', () => {
     mockBatch.update.mockClear();
     mockBatch.commit.mockResolvedValue(undefined);
 
-    const { collectionData } = await import('@angular/fire/firestore');
-    vi.mocked(collectionData).mockReturnValue(of(makePairs(4)) as any);
+    const { onSnapshot } = await import('@angular/fire/firestore');
+    const mockPairs = makePairs(4);
+    vi.mocked(onSnapshot as any).mockImplementation((_q: unknown, successCb: Function) => {
+      successCb({ docs: mockPairs.map((d: any) => ({ id: d.id, data: () => d })) });
+      return () => {};
+    });
 
     const { Firestore } = await import('@angular/fire/firestore');
 

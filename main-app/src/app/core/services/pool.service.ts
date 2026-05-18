@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
-  collectionData,
   addDoc,
   doc,
   getDoc,
@@ -12,6 +11,7 @@ import {
   where,
   writeBatch,
 } from '@angular/fire/firestore';
+import { firestoreStream } from '../utils/firestore-stream';
 import { Observable } from 'rxjs';
 import { Pool, isDoubleGameType, maxPerPool } from '../models/pool.model';
 import { GameType } from '../models/registration.model';
@@ -204,7 +204,7 @@ export class PoolService {
       ? query(poolsRef, where('gameType', '==', gameType))
       : poolsRef;
 
-    return collectionData(q, { idField: 'id' }) as Observable<Pool[]>;
+    return firestoreStream(q, 'id') as Observable<Pool[]>;
   }
 
   /**
@@ -213,6 +213,6 @@ export class PoolService {
   getPoolsForPlayer(tournamentId: string, playerId: string): Observable<Pool[]> {
     const poolsRef = this.poolsRef(tournamentId);
     const q = query(poolsRef, where('memberIds', 'array-contains', playerId));
-    return collectionData(q, { idField: 'id' }) as Observable<Pool[]>;
+    return firestoreStream(q, 'id') as Observable<Pool[]>;
   }
 }

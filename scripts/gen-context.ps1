@@ -30,16 +30,16 @@ $worktree = "D:/Works/Projects/Persos/manage-bad-turnaments-worktrees/issue-$Iss
 $servicesDir = "main-app/src/app/core/services"
 $existingServices = @()
 if (Test-Path $servicesDir) {
-    $existingServices = Get-ChildItem $servicesDir -Filter "*.service.ts" -Recurse |
-        ForEach-Object { "- $($_.Name) : $($_.FullName.Replace((Get-Location).Path + '\', '').Replace('\','/'))" }
+    $existingServices = @(Get-ChildItem $servicesDir -Filter "*.service.ts" -Recurse |
+        ForEach-Object { "- $($_.Name) : $($_.FullName.Replace((Get-Location).Path + '\', '').Replace('\','/'))" })
 }
 
 # Grep des modèles/interfaces existants
 $modelsDir = "main-app/src/app/core/models"
 $existingModels = @()
 if (Test-Path $modelsDir) {
-    $existingModels = Get-ChildItem $modelsDir -Filter "*.ts" -Recurse |
-        ForEach-Object { "- $($_.Name) : $($_.FullName.Replace((Get-Location).Path + '\', '').Replace('\','/'))" }
+    $existingModels = @(Get-ChildItem $modelsDir -Filter "*.ts" -Recurse |
+        ForEach-Object { "- $($_.Name) : $($_.FullName.Replace((Get-Location).Path + '\', '').Replace('\','/'))" })
 }
 
 $servicesSection = if ($existingServices.Count -gt 0) {

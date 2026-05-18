@@ -19,8 +19,10 @@ describe('RegisterComponent', () => {
     },
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // Reset route mock to default (valid token) — individual tests may override it
+    mockRoute.snapshot.paramMap.get = vi.fn().mockReturnValue('valid-token');
 
     mockPlayerService = {
       registerPlayer: vi.fn().mockResolvedValue({
@@ -58,6 +60,8 @@ describe('RegisterComponent', () => {
 
     const fixture = TestBed.createComponent(RegisterComponent);
     component = fixture.componentInstance;
+    // Run ngOnInit so checkingToken becomes false (required for onSubmit guards)
+    await component.ngOnInit();
   });
 
   it('should be created', () => {

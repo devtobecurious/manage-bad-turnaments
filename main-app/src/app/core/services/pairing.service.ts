@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
-  collectionData,
   addDoc,
   doc,
   deleteDoc,
@@ -12,6 +11,7 @@ import {
   updateDoc,
   writeBatch,
 } from '@angular/fire/firestore';
+import { firestoreStream } from '../utils/firestore-stream';
 import { Observable } from 'rxjs';
 import { Pair } from '../models/pairing.model';
 import { GameType } from '../models/registration.model';
@@ -70,7 +70,7 @@ export class PairingService {
   getPairs(tournamentId: string, gameType: GameType): Observable<Pair[]> {
     const pairsRef = collection(this.firestore, 'tournaments', tournamentId, 'pairs');
     const q = query(pairsRef, where('gameType', '==', gameType));
-    return collectionData(q, { idField: 'id' }) as Observable<Pair[]>;
+    return firestoreStream(q, 'id') as Observable<Pair[]>;
   }
 
   /**

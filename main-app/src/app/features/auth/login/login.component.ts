@@ -1,5 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { filter, firstValueFrom, take } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -44,6 +46,9 @@ export class LoginComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
+  // toObservable MUST be called in injection context (class field), not inside async methods
+  private readonly currentUser$ = toObservable(this.authService.currentUser);
+
   readonly isLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
@@ -53,6 +58,15 @@ export class LoginComponent {
 
     try {
       await this.authService.signInWithGoogle();
+
+      // Wait for onAuthStateChanged to load the user profile from Firestore
+      await firstValueFrom(
+        this.currentUser$.pipe(
+          filter(user => user !== null),
+          take(1),
+        )
+      );
+
       await this.router.navigate(['/admin']);
     } catch {
       this.errorMessage.set('Erreur lors de la connexion. Veuillez réessayer.');

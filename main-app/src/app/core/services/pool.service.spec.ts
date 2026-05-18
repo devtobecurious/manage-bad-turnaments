@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { of } from 'rxjs';
 import { PoolService, fisherYatesShuffle, distributeIntoPools } from './pool.service';
 
 // --- Mock @angular/fire/firestore ---
@@ -19,7 +18,6 @@ vi.mock('@angular/fire/firestore', () => {
   return {
     Firestore: class MockFirestore {},
     collection: vi.fn().mockReturnValue({ path: 'pools' }),
-    collectionData: vi.fn(),
     addDoc: vi.fn().mockResolvedValue({ id: 'pool-id-1' }),
     doc: vi.fn().mockReturnValue({ path: 'tournaments/t1' }),
     getDoc: vi.fn().mockResolvedValue({
@@ -38,6 +36,7 @@ vi.mock('@angular/fire/firestore', () => {
     where: vi.fn().mockReturnValue({}),
     writeBatch: vi.fn().mockImplementation(() => batchObj),
     deleteDoc: vi.fn().mockResolvedValue(undefined),
+    onSnapshot: vi.fn(),
   };
 });
 
@@ -179,8 +178,13 @@ describe('PoolService', () => {
       batch.commit.mockClear().mockResolvedValue(undefined);
     }
 
-    const { Firestore, collectionData } = await import('@angular/fire/firestore');
-    vi.mocked(collectionData).mockReturnValue(of([]) as any);
+    const { onSnapshot } = await import('@angular/fire/firestore');
+    vi.mocked(onSnapshot as any).mockImplementation((_q: unknown, successCb: Function) => {
+      successCb({ docs: [] });
+      return () => {};
+    });
+
+    const { Firestore } = await import('@angular/fire/firestore');
 
     TestBed.configureTestingModule({
       providers: [
@@ -399,11 +403,14 @@ describe('PoolService', () => {
   // --- getPools() ---
 
   it('getPools() should return observable of pools', async () => {
-    const { collectionData } = await import('@angular/fire/firestore');
+    const { onSnapshot } = await import('@angular/fire/firestore');
     const mockPools = [
       { id: 'pool1', tournamentId: 't1', gameType: 'simple-homme', poolNumber: 1, memberIds: ['p1', 'p2'], locked: false },
     ];
-    vi.mocked(collectionData).mockReturnValueOnce(of(mockPools) as any);
+    vi.mocked(onSnapshot as any).mockImplementationOnce((_q: unknown, successCb: Function) => {
+      successCb({ docs: mockPools.map((d: any) => ({ id: d.id, data: () => d })) });
+      return () => {};
+    });
 
     const result$ = service.getPools('t1');
     return new Promise<void>((resolve) => {
@@ -415,8 +422,7 @@ describe('PoolService', () => {
   });
 
   it('getPools() with gameType should filter by game type', async () => {
-    const { where, collectionData } = await import('@angular/fire/firestore');
-    vi.mocked(collectionData).mockReturnValueOnce(of([]) as any);
+    const { where } = await import('@angular/fire/firestore');
 
     service.getPools('t1', 'simple-homme');
     expect(where).toHaveBeenCalledWith('gameType', '==', 'simple-homme');
@@ -425,8 +431,7 @@ describe('PoolService', () => {
   // --- getPoolsForPlayer() ---
 
   it('getPoolsForPlayer() should query pools containing the player — AC: joueurs peuvent consulter leur poule', async () => {
-    const { where, collectionData } = await import('@angular/fire/firestore');
-    vi.mocked(collectionData).mockReturnValueOnce(of([]) as any);
+    const { where } = await import('@angular/fire/firestore');
 
     service.getPoolsForPlayer('t1', 'player-1');
     expect(where).toHaveBeenCalledWith('memberIds', 'array-contains', 'player-1');

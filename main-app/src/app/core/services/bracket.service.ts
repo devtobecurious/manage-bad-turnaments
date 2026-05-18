@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
-  collectionData,
   getDocs,
   doc,
   setDoc,
@@ -10,6 +9,7 @@ import {
   getDoc,
   updateDoc,
 } from '@angular/fire/firestore';
+import { firestoreStream } from '../utils/firestore-stream';
 import { Observable } from 'rxjs';
 import { BracketMatch, BracketParticipant } from '../models/bracket.model';
 import { PoolStanding } from '../models/standings.model';
@@ -492,9 +492,7 @@ export class BracketService {
    * ordered by round then position.
    */
   getBracket(tournamentId: string): Observable<BracketMatch[]> {
-    return collectionData(this.bracketMatchesRef(tournamentId), {
-      idField: 'id',
-    }) as Observable<BracketMatch[]>;
+    return firestoreStream(this.bracketMatchesRef(tournamentId), 'id') as Observable<BracketMatch[]>;
   }
 
   /**

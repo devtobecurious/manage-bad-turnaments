@@ -2,11 +2,11 @@ import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
-  collectionData,
   getDocs,
   doc,
   setDoc,
 } from '@angular/fire/firestore';
+import { firestoreStream } from '../utils/firestore-stream';
 import { Observable } from 'rxjs';
 import { Match } from '../models/match.model';
 import { PoolStanding, PoolStandings } from '../models/standings.model';
@@ -275,8 +275,6 @@ export class StandingsService {
    * ordered by rank ascending.
    */
   getPoolStandings(tournamentId: string, poolId: string): Observable<PoolStanding[]> {
-    return collectionData(this.standingsRef(tournamentId, poolId), {
-      idField: 'participantId',
-    }) as Observable<PoolStanding[]>;
+    return firestoreStream(this.standingsRef(tournamentId, poolId), 'participantId') as Observable<PoolStanding[]>;
   }
 }

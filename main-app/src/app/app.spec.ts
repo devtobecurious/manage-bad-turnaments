@@ -14,10 +14,11 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render title', async () => {
+  it('should render router-outlet (no default template)', () => {
     const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
+    fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, main-app');
+    // app.html only contains <router-outlet /> — no hardcoded content
+    expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 });

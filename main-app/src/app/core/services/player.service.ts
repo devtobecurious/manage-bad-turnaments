@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
-  collectionData,
   addDoc,
   doc,
   getDoc,
@@ -11,6 +10,7 @@ import {
   orderBy,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
+import { firestoreStream } from '../utils/firestore-stream';
 import { Player, Gender } from '../models/player.model';
 
 export interface RegisterPlayerData {
@@ -28,7 +28,7 @@ export class PlayerService {
   getPlayers(): Observable<Player[]> {
     const playersRef = collection(this.firestore, 'players');
     const q = query(playersRef, orderBy('lastName', 'asc'));
-    return collectionData(q, { idField: 'id' }) as Observable<Player[]>;
+    return firestoreStream(q, 'id') as Observable<Player[]>;
   }
 
   async deactivatePlayer(playerId: string): Promise<void> {

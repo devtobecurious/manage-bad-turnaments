@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
-  collectionData,
   addDoc,
   doc,
   getDoc,
@@ -11,6 +10,7 @@ import {
   orderBy,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
+import { firestoreStream } from '../utils/firestore-stream';
 import { Tournament, GameType, TournamentStatus, PoolConfig } from '../models/tournament.model';
 
 export interface CreateTournamentData {
@@ -30,7 +30,7 @@ export class TournamentService {
   getTournaments(): Observable<Tournament[]> {
     const tournamentsRef = collection(this.firestore, 'tournaments');
     const q = query(tournamentsRef, orderBy('createdAt', 'desc'));
-    return collectionData(q, { idField: 'id' }) as Observable<Tournament[]>;
+    return firestoreStream(q, 'id') as Observable<Tournament[]>;
   }
 
   async getTournament(id: string): Promise<Tournament | null> {

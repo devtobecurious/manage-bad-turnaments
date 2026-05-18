@@ -11,8 +11,11 @@ export class AuthService {
   private readonly firestore = inject(Firestore);
 
   private readonly _currentUser = signal<AppUser | null>(null);
+  /** Becomes true after the first onAuthStateChanged callback (incl. "not logged in") */
+  private readonly _authReady = signal(false);
 
   readonly currentUser = this._currentUser.asReadonly();
+  readonly authReady = this._authReady.asReadonly();
   readonly isAdmin = computed(() => this._currentUser()?.role === 'admin');
   readonly isAuthenticated = computed(() => this._currentUser() !== null);
 
@@ -28,12 +31,15 @@ export class AuthService {
       } else {
         this._currentUser.set(null);
       }
+      // Signal that the initial auth state has been resolved
+      this._authReady.set(true);
     });
   }
 
   async signInWithGoogle(): Promise<void> {
     const provider = new GoogleAuthProvider();
     await signInWithPopup(this.auth, provider);
+    // onAuthStateChanged will load the user profile asynchronously
   }
 
   async signOut(): Promise<void> {

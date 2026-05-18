@@ -2,13 +2,13 @@ import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
-  collectionData,
   addDoc,
   getDocs,
   writeBatch,
   doc,
   updateDoc,
 } from '@angular/fire/firestore';
+import { firestoreStream } from '../utils/firestore-stream';
 import { Observable } from 'rxjs';
 import {
   Match,
@@ -129,9 +129,7 @@ export class MatchService {
    * Returns a real-time observable of matches for a given pool.
    */
   getMatchesForPool(tournamentId: string, poolId: string): Observable<Match[]> {
-    return collectionData(this.matchesRef(tournamentId, poolId), {
-      idField: 'id',
-    }) as Observable<Match[]>;
+    return firestoreStream(this.matchesRef(tournamentId, poolId), 'id') as Observable<Match[]>;
   }
 
   /**

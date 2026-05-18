@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { LoginComponent } from './login.component';
 import { AuthService } from '../../../core/services/auth.service';
@@ -12,6 +13,8 @@ describe('LoginComponent', () => {
   beforeEach(() => {
     mockAuthService = {
       signInWithGoogle: vi.fn().mockResolvedValue(undefined),
+      // currentUser must be a signal — LoginComponent uses toObservable(authService.currentUser)
+      currentUser: signal({ uid: 'u1', email: 'test@test.com', displayName: 'Test', role: 'admin' }),
     };
     mockRouter = {
       navigate: vi.fn().mockResolvedValue(true),

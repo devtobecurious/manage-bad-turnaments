@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { of } from 'rxjs';
 import { MatchService } from './match.service';
 import { PoolService } from './pool.service';
 import { PlayerService } from './player.service';
@@ -235,12 +234,12 @@ vi.mock('@angular/fire/firestore', () => {
   return {
     Firestore: class MockFirestore {},
     collection: vi.fn().mockReturnValue({ path: 'matches' }),
-    collectionData: vi.fn(),
     addDoc: vi.fn().mockResolvedValue({ id: 'match-id-1' }),
     getDocs: vi.fn().mockResolvedValue({ docs: [] }),
     writeBatch: vi.fn().mockImplementation(() => batchObj),
     doc: vi.fn().mockReturnValue({ path: 'matches/match-1' }),
     updateDoc: vi.fn().mockResolvedValue(undefined),
+    onSnapshot: vi.fn(),
   };
 });
 
@@ -265,8 +264,11 @@ describe('MatchService', () => {
     mockPlayerService.getPlayer.mockResolvedValue(null);
     mockStandingsService.recalculateStandings.mockResolvedValue(undefined);
 
-    const { collectionData } = await import('@angular/fire/firestore');
-    vi.mocked(collectionData).mockReturnValue(of([]) as any);
+    const { onSnapshot } = await import('@angular/fire/firestore');
+    vi.mocked(onSnapshot as any).mockImplementation((_q: unknown, successCb: Function) => {
+      successCb({ docs: [] });
+      return () => {};
+    });
 
     const { Firestore } = await import('@angular/fire/firestore');
 

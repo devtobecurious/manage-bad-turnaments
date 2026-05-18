@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { of } from 'rxjs';
 import {
   BracketService,
   collectQualifiers,
@@ -356,7 +355,6 @@ vi.mock('@angular/fire/firestore', () => {
   return {
     Firestore: class MockFirestore {},
     collection: vi.fn().mockReturnValue({ path: 'bracketMatches' }),
-    collectionData: vi.fn(),
     getDocs: vi.fn().mockResolvedValue({ docs: [] }),
     doc: vi.fn().mockReturnValue({ id: 'mockDoc', path: 'bracket/main' }),
     setDoc: vi.fn().mockResolvedValue(undefined),
@@ -368,6 +366,7 @@ vi.mock('@angular/fire/firestore', () => {
       commit: vi.fn().mockResolvedValue(undefined),
     }),
     getDoc: vi.fn(),
+    onSnapshot: vi.fn(),
   };
 });
 
@@ -377,8 +376,11 @@ describe('BracketService', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    const { collectionData } = await import('@angular/fire/firestore');
-    vi.mocked(collectionData).mockReturnValue(of([]) as any);
+    const { onSnapshot } = await import('@angular/fire/firestore');
+    vi.mocked(onSnapshot as any).mockImplementation((_q: unknown, successCb: Function) => {
+      successCb({ docs: [] });
+      return () => {};
+    });
 
     const { Firestore } = await import('@angular/fire/firestore');
 

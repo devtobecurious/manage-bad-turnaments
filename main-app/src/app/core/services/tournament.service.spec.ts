@@ -1,13 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { of } from 'rxjs';
 import { TournamentService } from './tournament.service';
 import { Tournament, PoolConfig } from '../models/tournament.model';
 
 vi.mock('@angular/fire/firestore', () => ({
   Firestore: class MockFirestore {},
   collection: vi.fn().mockReturnValue({ path: 'tournaments' }),
-  collectionData: vi.fn(),
   addDoc: vi.fn().mockResolvedValue({ id: 'generated-tournament-id' }),
   doc: vi.fn().mockReturnValue({ path: 'tournaments/tournament-1' }),
   getDoc: vi.fn().mockResolvedValue({
@@ -27,6 +25,7 @@ vi.mock('@angular/fire/firestore', () => ({
   updateDoc: vi.fn().mockResolvedValue(undefined),
   query: vi.fn().mockImplementation((ref) => ref),
   orderBy: vi.fn().mockReturnValue({}),
+  onSnapshot: vi.fn(),
 }));
 
 const mockTournaments: Tournament[] = [
@@ -57,8 +56,11 @@ describe('TournamentService', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    const { collectionData } = await import('@angular/fire/firestore');
-    vi.mocked(collectionData).mockReturnValue(of(mockTournaments) as any);
+    const { onSnapshot } = await import('@angular/fire/firestore');
+    vi.mocked(onSnapshot as any).mockImplementation((_q: unknown, successCb: Function) => {
+      successCb({ docs: mockTournaments.map((d: any) => ({ id: d.id, data: () => d })) });
+      return () => {};
+    });
 
     const { Firestore } = await import('@angular/fire/firestore');
 

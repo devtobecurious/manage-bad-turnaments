@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { of } from 'rxjs';
 import { RegistrationService } from './registration.service';
 import { Registration } from '../models/registration.model';
 
@@ -8,7 +7,6 @@ vi.mock('@angular/fire/firestore', () => ({
   Firestore: class MockFirestore {},
   collection: vi.fn().mockReturnValue({ path: 'tournaments/t1/registrations' }),
   collectionGroup: vi.fn().mockReturnValue({ path: 'registrations' }),
-  collectionData: vi.fn(),
   addDoc: vi.fn().mockResolvedValue({ id: 'reg-id-1' }),
   deleteDoc: vi.fn().mockResolvedValue(undefined),
   doc: vi.fn().mockReturnValue({ path: 'tournaments/t1' }),
@@ -20,6 +18,7 @@ vi.mock('@angular/fire/firestore', () => ({
   query: vi.fn().mockImplementation((ref) => ref),
   where: vi.fn().mockReturnValue({}),
   orderBy: vi.fn().mockReturnValue({}),
+  onSnapshot: vi.fn(),
 }));
 
 const mockRegistrations: Registration[] = [
@@ -52,8 +51,13 @@ describe('RegistrationService', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    const { collectionData, collectionGroup } = await import('@angular/fire/firestore');
-    vi.mocked(collectionData).mockReturnValue(of(mockRegistrations) as any);
+    const { onSnapshot } = await import('@angular/fire/firestore');
+    vi.mocked(onSnapshot as any).mockImplementation((_q: unknown, successCb: Function) => {
+      successCb({ docs: mockRegistrations.map((d: any) => ({ id: d.id, data: () => d })) });
+      return () => {};
+    });
+
+    const { collectionGroup } = await import('@angular/fire/firestore');
     vi.mocked(collectionGroup).mockReturnValue({ path: 'registrations' } as any);
 
     const { getDoc } = await import('@angular/fire/firestore');

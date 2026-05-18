@@ -23,6 +23,7 @@ describe('adminGuard', () => {
     mockAuthService = {
       isAuthenticated: computed(() => true),
       isAdmin: computed(() => true),
+      authReady: signal(true),
       currentUser: signal(null),
     } as unknown as AuthService;
 
@@ -41,6 +42,7 @@ describe('adminGuard', () => {
     mockAuthService = {
       isAuthenticated: computed(() => false),
       isAdmin: computed(() => false),
+      authReady: signal(true),
       currentUser: signal(null),
     } as unknown as AuthService;
 
@@ -60,6 +62,7 @@ describe('adminGuard', () => {
     mockAuthService = {
       isAuthenticated: computed(() => true),
       isAdmin: computed(() => false),
+      authReady: signal(true),
       currentUser: signal(null),
     } as unknown as AuthService;
 
@@ -79,6 +82,7 @@ describe('adminGuard', () => {
     mockAuthService = {
       isAuthenticated: computed(() => false),
       isAdmin: computed(() => false),
+      authReady: signal(true),
       currentUser: signal(null),
     } as unknown as AuthService;
 
