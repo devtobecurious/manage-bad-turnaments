@@ -20,8 +20,8 @@
 |----|---------|-------------|--------|
 | B1 | `app.html` | Template Angular par défaut ("Hello main-app") affiché au-dessus du router-outlet | ✅ CORRIGÉ |
 | B2 | `bracket.component.ts` | Erreur TypeScript `toSignal` incompatible avec Angular 22 (`initialValue: []`) | ✅ CORRIGÉ |
-| B3 | `register.component.ts` | Race condition : formulaire affiché avant fin de validation du token (pas de spinner de chargement pendant la vérification) | ⬜ À CORRIGER |
-| B4 | `register.component.ts` | `onSubmit()` ne vérifie pas `inviteInvalid()` avant d'appeler `registerPlayer()` | ⬜ À CORRIGER |
+| B3 | `register.component.ts` | Race condition : formulaire affiché avant fin de validation du token (pas de spinner de chargement pendant la vérification) | ✅ CORRIGÉ |
+| B4 | `register.component.ts` | `onSubmit()` ne vérifie pas `inviteInvalid()` avant d'appeler `registerPlayer()` | ✅ CORRIGÉ |
 
 ---
 
@@ -178,12 +178,14 @@
 
 ---
 
-## Bugs à corriger (en attente du go)
+## Bugs corrigés
 
-| ID | Priorité | Fichier | Description |
-|----|----------|---------|-------------|
-| B3 | 🟡 Moyenne | `register.component.ts` | Race condition token validation : afficher un spinner pendant `ngOnInit` async et bloquer le formulaire jusqu'à validation |
-| B4 | 🔴 Haute | `register.component.ts` | `onSubmit()` doit vérifier `inviteInvalid()` avant d'appeler `registerPlayer()` |
+| ID | Priorité | Fichier | Description | Statut |
+|----|----------|---------|-------------|--------|
+| B1 | 🔴 | `app.html` | Template Angular par défaut non supprimé | ✅ CORRIGÉ |
+| B2 | 🔴 | `bracket.component.ts` | `toSignal` incompatible Angular 22 | ✅ CORRIGÉ |
+| B3 | 🟡 | `register.component.ts` | Race condition token : spinner ajouté, formulaire bloqué pendant vérification | ✅ CORRIGÉ |
+| B4 | 🔴 | `register.component.ts` | `onSubmit()` n'empêchait pas l'écriture avec un token invalide | ✅ CORRIGÉ |
 
 ---
 

@@ -15,7 +15,15 @@ import { Gender } from '../../../core/models/player.model';
         <h1 class="text-2xl font-bold text-gray-900 mb-2">Rejoindre le club</h1>
         <p class="text-gray-500 mb-6">Créez votre profil de joueur</p>
 
-        @if (inviteInvalid()) {
+        @if (checkingToken()) {
+          <div class="flex items-center justify-center py-8 text-gray-400">
+            <svg class="animate-spin h-6 w-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            Vérification du lien…
+          </div>
+        } @else if (inviteInvalid()) {
           <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
             Ce lien d'invitation est invalide ou a expiré.
           </div>
@@ -124,6 +132,7 @@ export class RegisterComponent implements OnInit {
   gender: Gender | '' = '';
 
   readonly loading = signal(false);
+  readonly checkingToken = signal(true);
   readonly error = signal<string | null>(null);
   readonly registered = signal(false);
   readonly inviteInvalid = signal(false);
@@ -136,19 +145,26 @@ export class RegisterComponent implements OnInit {
 
     if (!this.token) {
       this.inviteInvalid.set(true);
+      this.checkingToken.set(false);
       return;
     }
 
-    const invite = await this.inviteService.getInviteByToken(this.token);
-    if (!invite) {
+    try {
+      const invite = await this.inviteService.getInviteByToken(this.token);
+      if (!invite) {
+        this.inviteInvalid.set(true);
+      }
+    } catch {
       this.inviteInvalid.set(true);
+    } finally {
+      this.checkingToken.set(false);
     }
   }
 
   async onSubmit(): Promise<void> {
-    if (!this.firstName || !this.lastName || !this.gender) {
-      return;
-    }
+    // B4 fix : bloquer si token invalide ou vérification en cours
+    if (!this.firstName || !this.lastName || !this.gender) return;
+    if (this.checkingToken() || this.inviteInvalid()) return;
 
     this.loading.set(true);
     this.error.set(null);
