@@ -6,7 +6,9 @@ import {
   computed,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toSignal, toObservable } from '@angular/core/rxjs-interop';
+import { switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { BracketService } from '../../../core/services/bracket.service';
 import { BracketMatch } from '../../../core/models/bracket.model';
 import { BracketScoreEntryComponent } from './bracket-score-entry.component';
@@ -207,10 +209,12 @@ export class BracketComponent implements OnInit {
   /** Champion ID set when the tournament is completed */
   readonly championId = signal<string | null>(null);
 
-  private readonly allMatches = toSignal<BracketMatch[]>(
-    this.bracketService.getBracket(this.tournamentId() || '__none__'),
-    { initialValue: [] }
+  private readonly _matchesRaw = toSignal(
+    toObservable(computed(() => this.tournamentId() || '__none__')).pipe(
+      switchMap(id => this.bracketService.getBracket(id))
+    )
   );
+  private readonly allMatches = computed(() => this._matchesRaw() ?? []);
 
   /** Matches grouped by round, sorted by round asc then position asc */
   readonly rounds = computed(() => {
