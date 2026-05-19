@@ -2,33 +2,40 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CloseRegistrationsComponent } from './close-registrations.component';
 import { TournamentService } from '../../../core/services/tournament.service';
-import { ComponentRef } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 const mockTournamentService = {
   closeRegistrations: vi.fn(),
+  getTournament: vi.fn(),
 };
 
 describe('CloseRegistrationsComponent', () => {
   let fixture: ComponentFixture<CloseRegistrationsComponent>;
   let component: CloseRegistrationsComponent;
-  let componentRef: ComponentRef<CloseRegistrationsComponent>;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     mockTournamentService.closeRegistrations.mockResolvedValue(undefined);
+    mockTournamentService.getTournament.mockResolvedValue({
+      id: 'tournament-1',
+      status: 'Inscriptions ouvertes',
+    });
 
     await TestBed.configureTestingModule({
       imports: [CloseRegistrationsComponent],
       providers: [
         { provide: TournamentService, useValue: mockTournamentService },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: { get: () => 'tournament-1' } } },
+        },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CloseRegistrationsComponent);
     component = fixture.componentInstance;
-    componentRef = fixture.componentRef;
-    componentRef.setInput('tournamentId', 'tournament-1');
-    componentRef.setInput('currentStatus', 'Inscriptions ouvertes');
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
   });
 
@@ -39,31 +46,31 @@ describe('CloseRegistrationsComponent', () => {
   // --- canClose computed — AC: bouton désactivé si statut != Inscriptions ouvertes ---
 
   it('canClose should be true when currentStatus is "Inscriptions ouvertes"', () => {
-    componentRef.setInput('currentStatus', 'Inscriptions ouvertes');
+    component.currentStatus.set('Inscriptions ouvertes');
     fixture.detectChanges();
     expect(component.canClose()).toBe(true);
   });
 
   it('canClose should be false when currentStatus is "Brouillon" — AC: désactive le bouton', () => {
-    componentRef.setInput('currentStatus', 'Brouillon');
+    component.currentStatus.set('Brouillon');
     fixture.detectChanges();
     expect(component.canClose()).toBe(false);
   });
 
   it('canClose should be false when currentStatus is "Inscriptions clôturées" — AC: déjà clôturé', () => {
-    componentRef.setInput('currentStatus', 'Inscriptions clôturées');
+    component.currentStatus.set('Inscriptions clôturées');
     fixture.detectChanges();
     expect(component.canClose()).toBe(false);
   });
 
   it('canClose should be false when currentStatus is "En cours"', () => {
-    componentRef.setInput('currentStatus', 'En cours');
+    component.currentStatus.set('En cours');
     fixture.detectChanges();
     expect(component.canClose()).toBe(false);
   });
 
   it('canClose should be false when currentStatus is "Terminé"', () => {
-    componentRef.setInput('currentStatus', 'Terminé');
+    component.currentStatus.set('Terminé');
     fixture.detectChanges();
     expect(component.canClose()).toBe(false);
   });

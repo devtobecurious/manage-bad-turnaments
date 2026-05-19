@@ -2,10 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { ComponentRef } from '@angular/core';
 import { RegistrationsComponent } from './registrations.component';
 import { RegistrationService } from '../../../core/services/registration.service';
 import { PlayerService } from '../../../core/services/player.service';
+import { ActivatedRoute } from '@angular/router';
 import { Registration } from '../../../core/models/registration.model';
 import { Player } from '../../../core/models/player.model';
 
@@ -32,7 +32,6 @@ describe('RegistrationsComponent', () => {
     removeRegistration: ReturnType<typeof vi.fn>;
   };
   let mockPlayerService: { getPlayers: ReturnType<typeof vi.fn> };
-  let componentRef: ComponentRef<RegistrationsComponent>;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -46,20 +45,22 @@ describe('RegistrationsComponent', () => {
     mockPlayerService = {
       getPlayers: vi.fn().mockReturnValue(of(mockPlayers)),
     };
+  });
 
-    await TestBed.configureTestingModule({
+  function createComponent(tournamentId = 't1') {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
       imports: [RegistrationsComponent],
       providers: [
         { provide: RegistrationService, useValue: mockRegistrationService },
         { provide: PlayerService, useValue: mockPlayerService },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: { get: () => tournamentId } } },
+        },
       ],
-    }).compileComponents();
-  });
-
-  function createComponent(tournamentId = 't1') {
+    });
     const fixture = TestBed.createComponent(RegistrationsComponent);
-    componentRef = fixture.componentRef;
-    componentRef.setInput('tournamentId', tournamentId);
     fixture.detectChanges();
     return fixture;
   }

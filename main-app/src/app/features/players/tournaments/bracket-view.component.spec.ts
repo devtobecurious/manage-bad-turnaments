@@ -2,6 +2,7 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { of, throwError } from 'rxjs';
 import { ComponentRef } from '@angular/core';
+import { provideRouter } from '@angular/router';
 import { BracketViewComponent } from './bracket-view.component';
 import { BracketService } from '../../../core/services/bracket.service';
 import { BracketMatch } from '../../../core/models/bracket.model';
@@ -87,6 +88,7 @@ async function createComponent(opts?: {
   await TestBed.configureTestingModule({
     imports: [BracketViewComponent],
     providers: [
+      provideRouter([]),
       { provide: BracketService, useValue: bracketSvc },
     ],
   }).compileComponents();
@@ -129,6 +131,7 @@ describe('BracketViewComponent', () => {
     TestBed.configureTestingModule({
       imports: [BracketViewComponent],
       providers: [
+        provideRouter([]),
         { provide: BracketService, useValue: { getBracket: vi.fn().mockReturnValue(of([])) } },
       ],
     });
@@ -262,7 +265,10 @@ describe('BracketViewComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [BracketViewComponent],
-      providers: [{ provide: BracketService, useValue: bracketSvc }],
+      providers: [
+        provideRouter([]),
+        { provide: BracketService, useValue: bracketSvc },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(BracketViewComponent);

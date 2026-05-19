@@ -2,6 +2,7 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { of } from 'rxjs';
 import { ComponentRef } from '@angular/core';
+import { provideRouter } from '@angular/router';
 import { PoolStandingsComponent } from './pool-standings.component';
 import { StandingsService } from '../../../core/services/standings.service';
 import { MatchService } from '../../../core/services/match.service';
@@ -157,6 +158,7 @@ async function createComponent(opts?: {
   await TestBed.configureTestingModule({
     imports: [PoolStandingsComponent],
     providers: [
+      provideRouter([]),
       { provide: StandingsService, useValue: standingsSvc },
       { provide: MatchService, useValue: matchSvc },
       { provide: TournamentService, useValue: tournamentSvc },
@@ -201,6 +203,7 @@ describe('PoolStandingsComponent', () => {
     TestBed.configureTestingModule({
       imports: [PoolStandingsComponent],
       providers: [
+        provideRouter([]),
         { provide: StandingsService, useValue: createMockStandingsService() },
         { provide: MatchService, useValue: createMockMatchService() },
         { provide: TournamentService, useValue: createMockTournamentService() },
@@ -306,6 +309,7 @@ describe('PoolStandingsComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PoolStandingsComponent],
       providers: [
+        provideRouter([]),
         { provide: StandingsService, useValue: createMockStandingsService() },
         { provide: MatchService, useValue: createMockMatchService() },
         { provide: TournamentService, useValue: tournamentSvc },

@@ -6,6 +6,7 @@ import { PairingComponent } from './pairing.component';
 import { PairingService } from '../../../core/services/pairing.service';
 import { RegistrationService } from '../../../core/services/registration.service';
 import { PlayerService } from '../../../core/services/player.service';
+import { ActivatedRoute } from '@angular/router';
 import { Pair } from '../../../core/models/pairing.model';
 
 const mockPairs: Pair[] = [
@@ -59,12 +60,15 @@ describe('PairingComponent', () => {
         { provide: PairingService, useValue: mockPairingService },
         { provide: RegistrationService, useValue: mockRegistrationService },
         { provide: PlayerService, useValue: mockPlayerService },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: { get: () => 't1' } } },
+        },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PairingComponent);
     component = fixture.componentInstance;
-    fixture.componentRef.setInput('tournamentId', 't1');
     fixture.detectChanges();
   });
 

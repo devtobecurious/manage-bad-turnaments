@@ -2,7 +2,7 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PublishTournamentComponent } from './publish-tournament.component';
 import { TournamentService } from '../../../core/services/tournament.service';
-import { ComponentRef } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 const mockTournamentService = {
   publishTournament: vi.fn(),
@@ -11,7 +11,6 @@ const mockTournamentService = {
 describe('PublishTournamentComponent', () => {
   let fixture: ComponentFixture<PublishTournamentComponent>;
   let component: PublishTournamentComponent;
-  let componentRef: ComponentRef<PublishTournamentComponent>;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -21,13 +20,15 @@ describe('PublishTournamentComponent', () => {
       imports: [PublishTournamentComponent],
       providers: [
         { provide: TournamentService, useValue: mockTournamentService },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: { get: () => 'tournament-1' } } },
+        },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PublishTournamentComponent);
     component = fixture.componentInstance;
-    componentRef = fixture.componentRef;
-    componentRef.setInput('tournamentId', 'tournament-1');
     fixture.detectChanges();
   });
 

@@ -6,8 +6,7 @@ import { TournamentService } from '../../../core/services/tournament.service';
 import { RegistrationService } from '../../../core/services/registration.service';
 import { PoolService } from '../../../core/services/pool.service';
 import { PlayerService } from '../../../core/services/player.service';
-import { provideRouter } from '@angular/router';
-import { ComponentRef } from '@angular/core';
+import { provideRouter, ActivatedRoute } from '@angular/router';
 import { Pool } from '../../../core/models/pool.model';
 
 // ---- Mock services ----
@@ -66,7 +65,6 @@ const mockPlayerService = {
 describe('PoolDrawComponent', () => {
   let fixture: ComponentFixture<PoolDrawComponent>;
   let component: PoolDrawComponent;
-  let componentRef: ComponentRef<PoolDrawComponent>;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -85,13 +83,15 @@ describe('PoolDrawComponent', () => {
         { provide: RegistrationService, useValue: mockRegistrationService },
         { provide: PoolService, useValue: mockPoolService },
         { provide: PlayerService, useValue: mockPlayerService },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: { get: () => 't1' } } },
+        },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PoolDrawComponent);
     component = fixture.componentInstance;
-    componentRef = fixture.componentRef;
-    componentRef.setInput('tournamentId', 't1');
     await fixture.whenStable();
     fixture.detectChanges();
   });
