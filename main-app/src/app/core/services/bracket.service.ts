@@ -249,6 +249,10 @@ export function resolveIntraPoolCollisions(matches: BracketMatch[], bracketSize:
           // Re-check bye status for both
           m.status = 'pending';
           other.status = (other.participantA && other.participantB) ? 'pending' : 'bye';
+          if (other.status === 'bye') {
+            const survivor = other.participantA ?? other.participantB;
+            other.winnerId = survivor?.id ?? null;
+          }
           swapped = true;
           break;
         }
@@ -260,6 +264,10 @@ export function resolveIntraPoolCollisions(matches: BracketMatch[], bracketSize:
           other.participantA = tmp;
           m.status = 'pending';
           other.status = (other.participantA && other.participantB) ? 'pending' : 'bye';
+          if (other.status === 'bye') {
+            const survivor = other.participantA ?? other.participantB;
+            other.winnerId = survivor?.id ?? null;
+          }
           swapped = true;
           break;
         }
@@ -407,9 +415,7 @@ export class BracketService {
 
     // Load tournament to get poolConfig
     const tournamentRef = doc(this.firestore, 'tournaments', tournamentId);
-    const tournamentSnap = await import('@angular/fire/firestore').then(({ getDoc }) =>
-      getDoc(tournamentRef)
-    );
+    const tournamentSnap = await getDoc(tournamentRef);
     if (!tournamentSnap.exists()) {
       throw new Error(`Tournoi ${tournamentId} introuvable.`);
     }

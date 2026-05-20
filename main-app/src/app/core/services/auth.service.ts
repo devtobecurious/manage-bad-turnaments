@@ -25,14 +25,19 @@ export class AuthService {
     });
 
     onAuthStateChanged(this.auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const appUser = await this.loadOrCreateUser(firebaseUser);
-        this._currentUser.set(appUser);
-      } else {
+      try {
+        if (firebaseUser) {
+          const appUser = await this.loadOrCreateUser(firebaseUser);
+          this._currentUser.set(appUser);
+        } else {
+          this._currentUser.set(null);
+        }
+      } catch {
         this._currentUser.set(null);
+      } finally {
+        // Signal that the initial auth state has been resolved
+        this._authReady.set(true);
       }
-      // Signal that the initial auth state has been resolved
-      this._authReady.set(true);
     });
   }
 

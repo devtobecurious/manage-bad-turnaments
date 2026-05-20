@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
-  addDoc,
   doc,
   deleteDoc,
   getDocs,
@@ -83,8 +82,10 @@ export class PairingService {
     await this.resetPairs(tournamentId, gameType);
 
     const pairsRef = collection(this.firestore, 'tournaments', tournamentId, 'pairs');
+    const batch = writeBatch(this.firestore);
     for (const pair of pairs) {
-      await addDoc(pairsRef, {
+      const newRef = doc(pairsRef);
+      batch.set(newRef, {
         tournamentId: pair.tournamentId,
         gameType: pair.gameType,
         player1Id: pair.player1Id,
@@ -92,6 +93,7 @@ export class PairingService {
         locked: false,
       });
     }
+    await batch.commit();
   }
 
   /**

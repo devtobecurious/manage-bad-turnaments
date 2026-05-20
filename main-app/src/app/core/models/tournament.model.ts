@@ -3,7 +3,7 @@ export type GameType =
   | 'simple-femme'
   | 'double-homme'
   | 'double-femme'
-  | 'mixte';
+  | 'double-mixte';
 
 export type TournamentStatus =
   | 'Brouillon'

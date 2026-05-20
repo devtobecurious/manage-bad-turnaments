@@ -1,0 +1,70 @@
+je souhaite développer une application de suivi des tournois internes pour mon association de badminton. 
+
+les tournois vont être pour juoer : 
+
+
+
+* simple
+
+* double homme
+
+* double femme
+
+* mx
+
+
+
+je veux pouvoir créer des tournois quand je veux
+
+des tournois, où il y a une poules, comme plusieurs
+
+des tournois où l'on peut faire rencontres de X poules puis, on prends les 1 ou 2 gagnants de chaque poule puis on les fait se rencontrer
+
+les points doivent se calculer automatiquement, comme dans un tournoi officiel
+
+
+
+on doit pouvoir suivre les stats de chaque joueur : 
+
+
+
+* s'il a joué en équipe,  en mx, ou en simple
+
+* combien de matchs gagnés en tout, par année, par tournoi
+
+
+
+on doit pouvoir saisir toutes les personnes du club 
+
+* soit via l'administration
+
+* soit via un lien  (accessible avec un qrcode possible)unique pour s'ajouter, et avoir son propre profil
+
+depuis l'admin, on doit pouvoir créer un tournoi
+soit en reprenant les infos du tournoi précédent, soit en en créant un nouveau
+
+pour ce tournoi, il faut attribuer toutes les personnes qui veulent jouer à ce tournoi : 
+- soit depuis le profil de chaque personne : elles peuvent rejoindre le tournoi créé
+- soit via un lien unique : rejoindre le tournoi : elles peuvent choisir sur ce lien, cette page, quelle type de match elle veut jouer : mx, simple homme uo femme, double homme ou femme. 
+
+pour chaque type de match pour ce tournoi : 
+- on va attribuer aléatoirement les personnes par poule
+> chaque poule contient max 5 personnes (si simple), max 4 équipes si (double ou mixte)
+
+tu vas me préparer l'ensemble des users stories INVEST et me proposer un ordre de création
+tant que je n'ai pas validé, on va continuer à échanger pour améliorer les US.
+
+dès ques les US sont validées, le prochain agent ira créer une issue sur github pour chaque US validé, avec sa priorité d'actions, ses critères d'acceptation.
+
+
+côté technique :
+l'application sera une application PWA angular qui pourra tourner sur android, comme sur ios.
+on utilisera la version angular 21
+
+tout le backend sera intégralement géré par Firebase (pas de dotnet) :
+- Firestore pour la base de données
+- Firebase Authentication avec OAuth Google uniquement (pas de login email/mot de passe)
+- pas de Firebase Cloud Functions : toute la logique métier (calcul des points, tirage aléatoire des poules, etc.) sera dans des services Angular dédiés
+- Firebase Hosting pour le déploiement de la PWA
+
+le compte firebase sera fourni par l'utilisateur. (settings à prévoir dans l'application)

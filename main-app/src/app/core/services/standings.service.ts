@@ -265,8 +265,10 @@ export class StandingsService {
     // Persist: upsert each participant's standing by participantId
     const standingsRef = this.standingsRef(tournamentId, poolId);
     for (const standing of standings) {
-      const docRef = doc(standingsRef, standing.participantId.replace(/\+/g, '_'));
-      await setDoc(docRef, standing);
+      const sanitizedId = standing.participantId.replace(/\+/g, '_');
+      const docRef = doc(standingsRef, sanitizedId);
+      // Write participantId explicitly so it is preserved as the original value (with '+')
+      await setDoc(docRef, { ...standing, participantId: standing.participantId });
     }
   }
 
@@ -275,6 +277,8 @@ export class StandingsService {
    * ordered by rank ascending.
    */
   getPoolStandings(tournamentId: string, poolId: string): Observable<PoolStanding[]> {
-    return firestoreStream(this.standingsRef(tournamentId, poolId), 'participantId') as Observable<PoolStanding[]>;
+    // Do not pass idField: participantId is stored explicitly in the document
+    // to preserve the original '+' separator (sanitized to '_' for the doc ID).
+    return firestoreStream(this.standingsRef(tournamentId, poolId)) as Observable<PoolStanding[]>;
   }
 }

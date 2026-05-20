@@ -113,6 +113,9 @@ export class RegistrationService {
   /**
    * Adds a registration manually (admin use case).
    * US-009: Admin adds a player to a game type.
+   *
+   * Admin bypass: l'admin peut inscrire manuellement indépendamment du statut du tournoi.
+   * Aucune vérification de statut n'est effectuée ici intentionnellement.
    */
   async addRegistration(data: AddRegistrationData): Promise<Registration> {
     const registrationsRef = collection(

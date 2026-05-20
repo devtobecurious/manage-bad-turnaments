@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "defaultMode": "auto",
+    "skipAutoPermissionPrompt": true,
+    "allow": [
+      "Bash(*)",
+      "PowerShell(*)"
+    ]
+  }
+}

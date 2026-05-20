@@ -6,6 +6,7 @@ import {
   getDocs,
   writeBatch,
   doc,
+  getDoc,
   updateDoc,
 } from '@angular/fire/firestore';
 import { firestoreStream } from '../utils/firestore-stream';
@@ -49,12 +50,9 @@ export class MatchService {
    */
   async generateMatches(tournamentId: string, poolId: string): Promise<void> {
     // Load pool data
-    const poolRef = collection(this.firestore, 'tournaments', tournamentId, 'pools');
-    const poolDoc = await getDocs(
-      collection(this.firestore, 'tournaments', tournamentId, 'pools')
-    );
-    const poolSnap = poolDoc.docs.find((d) => d.id === poolId);
-    if (!poolSnap) {
+    const poolDocRef = doc(this.firestore, 'tournaments', tournamentId, 'pools', poolId);
+    const poolSnap = await getDoc(poolDocRef);
+    if (!poolSnap.exists()) {
       throw new Error(`Pool ${poolId} not found in tournament ${tournamentId}`);
     }
 

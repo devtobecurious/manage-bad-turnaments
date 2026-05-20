@@ -134,7 +134,7 @@ export class CreateTournamentComponent {
     { value: 'simple-femme', label: 'Simple Femme' },
     { value: 'double-homme', label: 'Double Homme' },
     { value: 'double-femme', label: 'Double Femme' },
-    { value: 'mixte', label: 'Mixte' },
+    { value: 'double-mixte', label: 'Double Mixte' },
   ];
 
   name = '';

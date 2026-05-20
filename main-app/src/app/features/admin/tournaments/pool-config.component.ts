@@ -9,7 +9,7 @@ const GAME_TYPE_LABELS: Record<GameType, string> = {
   'simple-femme': 'Simple Femme',
   'double-homme': 'Double Homme',
   'double-femme': 'Double Femme',
-  'mixte': 'Mixte',
+  'double-mixte': 'Double Mixte',
 };
 
 @Component({
